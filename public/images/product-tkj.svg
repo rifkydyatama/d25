@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <rect width="600" height="400" fill="#E8F1FA"/>
+  <text x="300" y="180" font-family="system-ui, sans-serif" font-size="24" fill="#004E8C" text-anchor="middle" font-weight="600">Kelas Private TKJ</text>
+  <text x="300" y="220" font-family="system-ui, sans-serif" font-size="16" fill="#6C757D" text-anchor="middle">Teknik Komputer dan Jaringan</text>
+  <circle cx="300" cy="280" r="40" fill="none" stroke="#004E8C" stroke-width="2" stroke-dasharray="8 4"/>
+  <text x="300" y="350" font-family="system-ui, sans-serif" font-size="12" fill="#6C757D" text-anchor="middle">D25 Teknologi Pendidikan • UM</text>
+</svg>

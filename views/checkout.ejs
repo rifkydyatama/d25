@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - D25 Teknologi Pendidikan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Midtrans Snap.js -->
+    <% const snapUrl = (typeof midtransIsProduction !== 'undefined' && midtransIsProduction) ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js'; %>
+    <script src="<%= snapUrl %>" data-client-key="<%= typeof midtransClientKey !== 'undefined' ? midtransClientKey : '' %>"></script>
+    <style>
+        .checkout-wrapper {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8f1fa 50%, #f5f0ff 100%);
+            padding-bottom: 64px;
+        }
+
+        /* Steps indicator */
+        .checkout-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 32px 0 8px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: linear-gradient(135deg, var(--unm-blue), var(--unm-navy));
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 78, 140, 0.3);
+        }
+
+        .step.inactive .step-circle {
+            background: var(--medium-gray);
+            color: var(--text-secondary);
+        }
+
+        .step-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .step.active .step-label {
+            color: var(--unm-navy);
+        }
+
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: var(--medium-gray);
+            margin: 0 8px;
+        }
+
+        /* Main grid */
+        .checkout-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 32px;
+            align-items: start;
+        }
+
+        /* Glass card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 43, 92, 0.08), 0 2px 8px rgba(0, 43, 92, 0.04);
+            padding: 32px;
+        }
+
+        .glass-card h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--unm-navy);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .glass-card h2 .icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--unm-light-blue), #d4e6f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--unm-blue);
+        }
+
+        /* Form sections */
+        .form-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--unm-light-blue);
+        }
+
+        .form-section-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--unm-navy);
+            letter-spacing: -0.01em;
+        }
+
+        .form-section-header svg {
+            color: var(--unm-blue);
+        }
+
+        .form-section + .form-section {
+            margin-top: 28px;
+        }
+
+        /* Form fields */
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .field-grid.single {
+            grid-template-columns: 1fr;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .field label .required {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        .field input,
+        .field textarea {
+            padding: 12px 16px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            background: var(--white);
+            color: var(--text-primary);
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            outline: none;
+            border-color: var(--unm-blue);
+            box-shadow: 0 0 0 3px rgba(0, 78, 140, 0.1);
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: #adb5bd;
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Payment Methods */
+        .payment-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .payment-method-card {
+            display: block;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .payment-method-card input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .method-card-content {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .payment-method-card:hover .method-card-content {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+
+        .payment-method-card input:checked ~ .method-card-content {
+            border-color: var(--unm-blue);
+            background: #f0f7ff;
+            box-shadow: 0 4px 12px rgba(0, 78, 140, 0.1);
+        }
+
+        .method-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--unm-navy);
+        }
+
+        .method-fee {
+            font-size: 12px;
+            font-weight: 600;
+            color: #dc2626; /* Red for fee */
+        }
+
+
+        /* Submit button */
+        .btn-checkout {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--unm-blue), var(--unm-navy));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 28px;
+            box-shadow: 0 4px 16px rgba(0, 78, 140, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-checkout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(0, 78, 140, 0.35);
+        }
+
+        .btn-checkout:active {
+            transform: translateY(0);
+        }
+
+        .btn-checkout:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-checkout .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        .btn-checkout.loading .spinner { display: block; }
+        .btn-checkout.loading .btn-text { display: none; }
+        .btn-checkout.loading .btn-icon { display: none; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Summary card (sidebar) */
+        .summary-card {
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-card h2 {
+            font-size: 18px;
+        }
+
+        .summary-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .summary-item-img {
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: var(--light-gray);
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .summary-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .summary-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .summary-item-qty {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .summary-item-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--unm-navy);
+            white-space: nowrap;
+        }
+
+        .summary-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 16px 0;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+        }
+
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--unm-navy);
+            padding: 12px 0 0;
+            border-top: 2px solid var(--unm-navy);
+            margin-top: 8px;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #16a34a;
+            font-weight: 600;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0fdf4;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .secure-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Alert */
+        .checkout-alert {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 14px 18px;
+            color: #991b1b;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Pre-Order Option Cards */
+        .po-selection-section {
+            background: linear-gradient(135deg, #f0f7ff, #e8f4ff);
+            border: 1.5px solid #bfdbfe;
+            border-radius: 14px;
+            padding: 18px 20px;
+        }
+
+        .po-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .po-options-grid { grid-template-columns: 1fr; }
+        }
+
+        .po-option-card {
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .po-option-card input[type="radio"] {
+            margin-top: 3px;
+            accent-color: var(--unm-blue);
+        }
+
+        .po-option-card.active, .po-option-card:has(input:checked) {
+            border-color: var(--unm-blue);
+            background: #eff6ff;
+            box-shadow: 0 0 0 1px var(--unm-blue);
+        }
+
+        .po-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .po-desc {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .po-note-box {
+            background: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #854d0e;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
+        .po-badge {
+            display: inline-block;
+            background: #f59e0b;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+
+        .summary-row.po-dp {
+            background: #f0f7ff;
+            margin: 4px -8px;
+            padding: 8px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #1d4ed8;
+        }
+
+        .summary-row.po-remaining {
+            background: #fefce8;
+            margin: 4px -8px;
+            padding: 8px 8px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            color: #854d0e;
+        }
+
+        /* Terms */
+        .terms-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .terms-text a {
+            color: var(--unm-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+                padding: 16px;
+            }
+
+            .field-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .glass-card {
+                padding: 24px 20px;
+            }
+
+            .checkout-steps {
+                padding: 24px 16px 8px;
+            }
+
+            .step-label {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header.ejs', { currentPage: 'checkout' }) %>
+
+    <div class="checkout-wrapper">
+        <!-- Steps -->
+        <div class="checkout-steps">
+            <div class="step inactive">
+                <div class="step-circle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                </div>
+                <span class="step-label">Keranjang</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step active">
+                <div class="step-circle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+                <span class="step-label">Data & Pembayaran</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step inactive">
+                <div class="step-circle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <span class="step-label">Selesai</span>
+            </div>
+        </div>
+
+        <div class="checkout-container">
+            <!-- Left: Form -->
+            <div>
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="checkout-alert">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        <%= error %>
+                    </div>
+                <% } %>
+
+                <div class="glass-card" id="checkout-form-card">
+                    <h2>
+                        <div class="icon-circle">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                        Informasi Pemesan
+                    </h2>
+
+                    <form id="checkout-form">
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle></svg>
+                                <h3>Data Diri</h3>
+                            </div>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label for="name">Nama Lengkap <span class="required">*</span></label>
+                                    <input type="text" id="name" name="name" required autocomplete="name" placeholder="Nama sesuai KTP/KTM">
+                                </div>
+                                <div class="field">
+                                    <label for="email">Email <span class="required">*</span></label>
+                                    <input type="email" id="email" name="email" required autocomplete="email" placeholder="email@domain.com">
+                                </div>
+                            </div>
+                            <div class="field-grid" style="margin-top: 16px;">
+                                <div class="field">
+                                    <label for="phone">Nomor WhatsApp <span class="required">*</span></label>
+                                    <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="08xxxxxxxxxx">
+                                </div>
+                                <div class="field">
+                                    <label for="institution">Institusi / Unit</label>
+                                    <input type="text" id="institution" name="institution" autocomplete="organization" placeholder="Universitas/Instansi (opsional)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                <h3>Alamat Pengiriman</h3>
+                            </div>
+                            <div class="field-grid single">
+                                <div class="field">
+                                    <label for="address">Alamat Lengkap <span class="required">*</span></label>
+                                    <textarea id="address" name="address" required rows="3" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota, Provinsi, Kode Pos"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <% if (typeof poEnabled !== 'undefined' && poEnabled) { %>
+                        <div class="form-section po-selection-section">
+                            <div class="form-section-header">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                <h3>Tipe Pemesanan</h3>
+                            </div>
+                            <div class="po-options-grid">
+                                <label class="po-option-card active">
+                                    <input type="radio" name="is_preorder" value="0" checked>
+                                    <div class="po-card-content">
+                                        <div class="po-title">🛍️ Beli Langsung (Bayar Penuh)</div>
+                                        <div class="po-desc">Bayar total 100% dan pesanan langsung diproses sesuai ketersediaan.</div>
+                                    </div>
+                                </label>
+                                <label class="po-option-card">
+                                    <input type="radio" name="is_preorder" value="1">
+                                    <div class="po-card-content">
+                                        <div class="po-title">⚡ Pre-Order <span class="po-badge">DP <%= poSettings.dpPercentage || 50 %>%</span></div>
+                                        <div class="po-desc">Bayar uang muka (DP <%= poSettings.dpPercentage || 50 %>%) sekarang. Pelunasan sisa saat produk siap dikirim.</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <% if (poSettings && poSettings.description) { %>
+                            <div class="po-note-box">
+                                ℹ️ <b>Keterangan Pre-Order:</b> <%= poSettings.description %> (Estimasi <%= poSettings.deadlineDays || 14 %> hari pengerjaan)
+                            </div>
+                            <% } %>
+                        </div>
+                        <% } %>
+
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                <h3>Metode Pembayaran</h3>
+                            </div>
+                            <div class="payment-methods-grid">
+                                <% 
+                                let first = true;
+                                Object.keys(paymentFees).forEach((key) => { 
+                                    const fee = paymentFees[key];
+                                    const feeText = fee.type === 'flat' ? '+ ' + formatRupiah(fee.value) : '+ ' + fee.value + '%';
+                                %>
+                                <label class="payment-method-card">
+                                    <input type="radio" name="payment_method" value="<%= key %>" required <%= first ? 'checked' : '' %>>
+                                    <div class="method-card-content">
+                                        <div class="method-name"><%= fee.name %></div>
+                                        <div class="method-fee"><%= feeText %></div>
+                                    </div>
+                                </label>
+                                <% first = false; }); %>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                <h3>Catatan (Opsional)</h3>
+                            </div>
+                            <div class="field-grid single">
+                                <div class="field">
+                                    <textarea id="notes" name="notes" rows="2" placeholder="Catatan khusus untuk pesanan Anda (ukuran, warna, dll)"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-checkout" id="btn-pay">
+                            <span class="spinner"></span>
+                            <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span class="btn-text">Bayar Sekarang — <%= formatRupiah(total) %></span>
+                        </button>
+
+                        <p class="terms-text">
+                            Dengan melanjutkan, Anda menyetujui <a href="#">Syarat & Ketentuan</a> dan <a href="#">Kebijakan Privasi</a> D25 Teknologi Pendidikan.
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Summary -->
+            <aside>
+                <div class="glass-card summary-card">
+                    <h2>
+                        <div class="icon-circle">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line></svg>
+                        </div>
+                        Ringkasan Pesanan
+                    </h2>
+                    
+                    <div class="summary-items">
+                        <% cart.forEach(item => { %>
+                        <div class="summary-item">
+                            <img src="<%= item.image || item.imageUrl || '/images/placeholder-product.svg' %>" 
+                                 alt="<%= item.name %>" 
+                                 class="summary-item-img"
+                                 onerror="this.src='/images/placeholder-product.svg'">
+                            <div class="summary-item-info">
+                                <div class="summary-item-name"><%= item.name %></div>
+                                <% if (item.size) { %>
+                                <div class="summary-item-size">Ukuran: <%= item.size %></div>
+                                <% if (item.sizePrice > 0) { %>
+                                <div class="summary-item-size" style="color: #dc2626;">+ <%= formatRupiah(item.sizePrice) %> ukuran</div>
+                                <% } %>
+                                <% } %>
+                                <div class="summary-item-qty">Qty: <%= item.quantity %></div>
+                            </div>
+                            <div class="summary-item-price"><%= formatRupiah(item.price * item.quantity) %></div>
+                        </div>
+                        <% }) %>
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-row">
+                        <span>Subtotal (<%= cart.reduce((s, i) => s + i.quantity, 0) %> item)</span>
+                        <span><%= formatRupiah(subtotal) %></span>
+                    </div>
+                    
+                    <div class="summary-row po-dp" id="po-dp-row" style="display: none;">
+                        <span>Uang Muka (DP <span id="po-dp-pct"><%= poSettings.dpPercentage || 50 %></span>%)</span>
+                        <span id="po-dp-amount">Rp 0</span>
+                    </div>
+
+                    <div class="summary-row" id="fee-row" style="display: none;">
+                        <span>Biaya Layanan</span>
+                        <span id="fee-amount">Rp 0</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>Ongkos Kirim</span>
+                        <span style="color: #16a34a; font-weight: 600;">Gratis</span>
+                    </div>
+                    
+                    <div class="summary-row total">
+                        <span id="total-label">Total Bayar</span>
+                        <span id="total-val"><%= formatRupiah(total) %></span>
+                    </div>
+
+                    <div class="summary-row po-remaining" id="po-remaining-row" style="display: none;">
+                        <span>⏳ Sisa Pelunasan Nanti</span>
+                        <span id="po-remaining-amount">Rp 0</span>
+                    </div>
+
+                    <div class="secure-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        Transaksi dijamin aman & terenkripsi Midtrans
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+        const checkoutForm = document.getElementById('checkout-form');
+        const btnPay = document.getElementById('btn-pay');
+        const feeRow = document.getElementById('fee-row');
+        const feeAmountEl = document.getElementById('fee-amount');
+        const totalAmountEl = document.getElementById('total-val');
+        const totalLabelEl = document.getElementById('total-label');
+        const btnTextEl = document.querySelector('.btn-text');
+        const poDpRow = document.getElementById('po-dp-row');
+        const poDpAmountEl = document.getElementById('po-dp-amount');
+        const poRemainingRow = document.getElementById('po-remaining-row');
+        const poRemainingAmountEl = document.getElementById('po-remaining-amount');
+
+        // Pass config and values from server
+        const paymentFees = <%- JSON.stringify(paymentFees || {}) %>;
+        const subtotal = <%= subtotal %>;
+        const poEnabled = <%= (typeof poEnabled !== 'undefined' && poEnabled) ? 'true' : 'false' %>;
+        const poDpPercentage = <%= (typeof poSettings !== 'undefined' && poSettings.dpPercentage) ? Number(poSettings.dpPercentage) : 50 %>;
+
+        function updateFee() {
+            const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+            const poRadio = document.querySelector('input[name="is_preorder"]:checked');
+            const isPO = poRadio ? (poRadio.value === '1') : false;
+
+            // Highlight active PO card
+            document.querySelectorAll('.po-option-card').forEach(card => {
+                const radio = card.querySelector('input[type="radio"]');
+                if (radio && radio.checked) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+
+            // Base calculation
+            let chargeBase = subtotal;
+            let dpAmount = 0;
+            let remainingAmount = 0;
+
+            if (isPO) {
+                dpAmount = Math.round(subtotal * (poDpPercentage / 100));
+                remainingAmount = subtotal - dpAmount;
+                chargeBase = dpAmount; // Fee is calculated on DP or charged with DP
+
+                if (poDpRow) {
+                    poDpRow.style.display = 'flex';
+                    poDpAmountEl.textContent = formatIDR(dpAmount);
+                }
+                if (poRemainingRow) {
+                    poRemainingRow.style.display = 'flex';
+                    poRemainingAmountEl.textContent = formatIDR(remainingAmount);
+                }
+                if (totalLabelEl) {
+                    totalLabelEl.textContent = 'Total Bayar Sekarang (DP)';
+                }
+            } else {
+                if (poDpRow) poDpRow.style.display = 'none';
+                if (poRemainingRow) poRemainingRow.style.display = 'none';
+                if (totalLabelEl) totalLabelEl.textContent = 'Total Bayar';
+            }
+
+            // Fee calculation
+            let fee = 0;
+            if (selectedMethod) {
+                const methodKey = selectedMethod.value;
+                const feeConfig = paymentFees[methodKey];
+                if (feeConfig) {
+                    if (feeConfig.type === 'flat') {
+                        fee = Number(feeConfig.value) || 0;
+                    } else if (feeConfig.type === 'percent') {
+                        // Percent on the amount being paid now
+                        fee = Math.round(chargeBase * ((Number(feeConfig.value) || 0) / 100));
+                    }
+                }
+            }
+
+            if (fee > 0) {
+                feeRow.style.display = 'flex';
+                feeAmountEl.textContent = formatIDR(fee);
+            } else {
+                feeRow.style.display = 'none';
+            }
+
+            const finalPayNow = chargeBase + fee;
+            const formattedPayNow = formatIDR(finalPayNow);
+
+            if (totalAmountEl) totalAmountEl.textContent = formattedPayNow;
+            if (btnTextEl) {
+                if (isPO) {
+                    btnTextEl.textContent = `Bayar DP Sekarang — ${formattedPayNow}`;
+                } else {
+                    btnTextEl.textContent = `Bayar Sekarang — ${formattedPayNow}`;
+                }
+            }
+        }
+
+        function formatIDR(num) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+        }
+
+        // Listen for radio button changes
+        const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+        paymentRadios.forEach(radio => radio.addEventListener('change', updateFee));
+
+        const poRadios = document.querySelectorAll('input[name="is_preorder"]');
+        poRadios.forEach(radio => radio.addEventListener('change', updateFee));
+        
+        // Initial calculation
+        updateFee();
+
+        checkoutForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+
+            if (!name || !email || !phone || !address) {
+                alert('Mohon lengkapi semua field yang wajib diisi.');
+                return;
+            }
+
+            btnPay.disabled = true;
+            btnPay.classList.add('loading');
+
+            try {
+                const formData = new FormData(checkoutForm);
+                const body = {};
+                formData.forEach((val, key) => body[key] = val);
+
+                const response = await fetch('/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || 'Gagal memproses pesanan');
+                }
+
+                if (result.snapToken && typeof window.snap !== 'undefined') {
+                    window.snap.pay(result.snapToken, {
+                        onSuccess: function(midtransRes) {
+                            window.location.href = '/lacak-pesanan?no=' + (result.orderNumber || '') + '&status=success';
+                        },
+                        onPending: function(midtransRes) {
+                            window.location.href = '/lacak-pesanan?no=' + (result.orderNumber || '') + '&status=pending';
+                        },
+                        onError: function(midtransRes) {
+                            alert('Pembayaran dibatalkan atau gagal. Silakan pilih metode pembayaran lain atau coba kembali.');
+                            btnPay.disabled = false;
+                            btnPay.classList.remove('loading');
+                        },
+                        onClose: function() {
+                            // Redirect to tracking so customer can see order & pay later
+                            window.location.href = '/lacak-pesanan?no=' + (result.orderNumber || '') + '&status=pending';
+                        }
+                    });
+                } else if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                } else {
+                    window.location.href = '/lacak-pesanan?no=' + (result.orderNumber || '');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+                btnPay.disabled = false;
+                btnPay.classList.remove('loading');
+            }
+        });
+    </script>
+</body>
+</html>

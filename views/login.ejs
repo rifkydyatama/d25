@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - D25 Teknologi Pendidikan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/header.ejs', { currentPage: 'login' }) %>
+
+    <section class="login-page">
+        <div class="container">
+            <div class="login-card">
+                <div class="login-header">
+                    <a href="/" class="logo" style="justify-content: center;">
+                        <div class="logo-badge">D25</div>
+                        <div class="logo-text">
+                            <h1 style="font-size: 20px;">D25 Teknologi Pendidikan</h1>
+                        </div>
+                    </a>
+                    <h1>Masuk ke Dashboard Admin</h1>
+                    <p>Masukkan kredensial admin untuk mengelola produk dan pesanan</p>
+                </div>
+                
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-error"><%= error %></div>
+                <% } %>
+                
+                <form action="/login" method="POST" id="login-form">
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required autocomplete="email" placeholder="Masukkan email">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password <span class="required">*</span></label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Masukkan password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-login">Masuk</button>
+                </form>
+                
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color); text-align: center;">
+                    <p style="font-size: 13px; color: var(--text-secondary);">
+                        Kembali ke <a href="/" style="color: var(--unm-blue);">Beranda</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>

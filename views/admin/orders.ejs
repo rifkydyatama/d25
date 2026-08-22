@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Pesanan - Admin D25</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'orders' }) %>
+        
+        <main class="admin-main">
+            <div class="admin-header">
+                <div>
+                    <h1>Kelola Pesanan</h1>
+                    <p style="color: var(--text-secondary); margin-top: 4px;">Kelola dan pantau semua pesanan masuk</p>
+                </div>
+            </div>
+            
+            <section class="admin-section">
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>No. Pesanan</th>
+                                <th>Pelanggan</th>
+                                <th>Produk / Items</th>
+                                <th>Total</th>
+                                <th>Metode Bayar</th>
+                                <th>Status Pesanan</th>
+                                <th>Status Bayar</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders.length === 0) { %>
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 48px; color: var(--text-secondary);">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;"><path d="M16 11V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><line x1="22" y1="9" x2="22" y2="9"></line></svg>
+                                    <div>Belum ada pesanan yang masuk.</div>
+                                </td>
+                            </tr>
+                            <% } else { %>
+                            <% orders.forEach(order => { %>
+                            <tr>
+                                <td style="font-family: monospace; font-weight: 600; color: var(--unm-blue);"><%= order.order_number %></td>
+                                <td>
+                                    <div style="font-weight: 500;"><%= order.customer_name %></div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);"><%= order.customer_email %></div>
+                                    <% if (order.customer_phone) { %>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">📱 <%= order.customer_phone %></div>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (order.order_items && order.order_items.length > 0) { %>
+                                        <% order.order_items.forEach((item, idx) => { %>
+                                            <div style="font-size: 13px; <% if (idx > 0) { %>margin-top: 4px;<% } %>">
+                                                <%= item.product_name %>
+                                                <% if (item.size) { %>
+                                                    <span style="color: var(--text-secondary);">(Ukuran <%= item.size %><% if (Number(item.size_price || 0) > 0) { %> + <%= formatRupiah(item.size_price) %><% } %>)</span>
+                                                <% } %>
+                                                <strong style="color: var(--unm-navy);">× <%= item.quantity %></strong>
+                                            </div>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <span style="color: var(--text-secondary); font-size: 12px;">-</span>
+                                    <% } %>
+                                </td>
+                                <td style="font-weight: 600; color: var(--unm-navy);"><%= formatRupiah(order.total) %></td>
+                                <td>
+                                    <span style="font-size: 12px; text-transform: uppercase; font-weight: 600; background: var(--unm-light-blue); padding: 3px 8px; border-radius: 4px; color: var(--unm-blue);">
+                                        <%= (order.payment_method || 'Midtrans').replace('_', ' ') %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <select class="status-select" data-order-id="<%= order.id %>" data-field="status" style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; background: var(--white); cursor: pointer;">
+                                        <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                        <option value="preorder" <%= order.status === 'preorder' ? 'selected' : '' %>>Pre Order</option>
+                                        <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing (Diproduksi)</option>
+                                        <option value="ready" <%= order.status === 'ready' ? 'selected' : '' %>>Siap Dikirim / Pelunasan</option>
+                                        <option value="completed" <%= order.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                                        <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="status-select" data-order-id="<%= order.id %>" data-field="paymentStatus" style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; background: var(--white); cursor: pointer;">
+                                        <option value="unpaid" <%= order.payment_status === 'unpaid' ? 'selected' : '' %>>Unpaid</option>
+                                        <option value="dp_paid" <%= order.payment_status === 'dp_paid' ? 'selected' : '' %>>DP Terbayar</option>
+                                        <option value="paid" <%= order.payment_status === 'paid' ? 'selected' : '' %>>Paid (Lunas)</option>
+                                        <option value="failed" <%= order.payment_status === 'failed' ? 'selected' : '' %>>Failed</option>
+                                        <option value="refunded" <%= order.payment_status === 'refunded' ? 'selected' : '' %>>Refunded</option>
+                                    </select>
+                                </td>
+                                <td><%= new Date(order.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                                <td>
+                                    <div style="display: flex; gap: 4px; align-items: center;">
+                                        <button class="btn-icon view-order" data-order-id="<%= order.id %>" aria-label="Lihat detail" title="Lihat detail pesanan">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        </button>
+                                        <button class="btn-icon delete-order" data-order-id="<%= order.id %>" data-order-number="<%= order.order_number %>" aria-label="Hapus pesanan" title="Hapus pesanan" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                        <% if (order.customer_phone) { 
+                                            const cleanPhone = order.customer_phone.replace(/\D/g, '').replace(/^0/, '62');
+                                            const waMsg = encodeURIComponent(`Halo Kak ${order.customer_name}, pesanan Pre-Order Anda #${order.order_number} sudah siap. Silakan lakukan pelunasan sisa tagihan melalui tautan berikut: http://localhost:3000/lacak-pesanan?no=${order.order_number}\n\nTerima kasih! D25 Teknologi Pendidikan`);
+                                        %>
+                                        <a href="https://wa.me/<%= cleanPhone %>?text/<%= waMsg %>" target="_blank" class="btn-icon" title="Tagih Pelunasan via WhatsApp" style="background:#25D366;color:white;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;">
+                                            💬
+                                        </a>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }) %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="orderModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 24px;">
+        <div class="modal-content" style="background: var(--white); border-radius: var(--radius); width: 100%; max-width: 750px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-medium);">
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; color: var(--unm-navy); font-size: 20px;">Detail Pesanan</h2>
+                <button id="closeModal" class="btn-icon" style="width: 36px; height: 36px;" aria-label="Tutup">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div id="modalBody" style="padding: 24px;"></div>
+        </div>
+    </div>
+
+    <style>
+        .status-select { min-width: 120px; }
+    </style>
+
+    <script>
+        // Update order status
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', async function() {
+                const orderId = this.dataset.orderId;
+                const field = this.dataset.field;
+                const value = this.value;
+                const originalValue = this.defaultValue || this.value;
+                this.disabled = true;
+                
+                try {
+                    const body = field === 'status' ? { status: value } : { paymentStatus: value };
+                    const response = await fetch(`/admin/orders/${orderId}/status`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.message || 'Gagal update');
+                    this.defaultValue = value;
+                } catch (e) {
+                    alert('Gagal memperbarui status: ' + e.message);
+                    this.value = this.defaultValue || originalValue;
+                } finally {
+                    this.disabled = false;
+                }
+            });
+            select.defaultValue = select.value;
+        });
+
+        // View order detail
+        document.querySelectorAll('.view-order').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const orderId = this.dataset.orderId;
+                const modal = document.getElementById('orderModal');
+                const modalBody = document.getElementById('modalBody');
+                
+                modalBody.innerHTML = '<div style="text-align: center; padding: 48px;"><p>Memuat detail pesanan...</p></div>';
+                modal.style.display = 'flex';
+                
+                try {
+                    const response = await fetch(`/admin/api/orders/${orderId}`);
+                    if (!response.ok) throw new Error('Order tidak ditemukan');
+                    const order = await response.json();
+                    
+                    let itemsListHtml = '';
+                    if (order.order_items && order.order_items.length > 0) {
+                        itemsListHtml = order.order_items.map(item => {
+                            const sizeFee = Number(item.size_price || 0);
+                            const sizeText = item.size ? `<div style="font-size: 12px; color: var(--text-secondary);">Ukuran: ${item.size}${sizeFee > 0 ? ` (+ Rp ${sizeFee.toLocaleString('id-ID')})` : ''}</div>` : '';
+                            return `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--unm-navy);">${item.product_name}</div>
+                                        ${sizeText}
+                                        <div style="font-size: 12px; color: var(--text-secondary);">Harga Satuan: Rp ${(item.unit_price || 0).toLocaleString('id-ID')}</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600;">× ${item.quantity}</div>
+                                        <div style="font-weight: 700; color: var(--unm-blue);">Rp ${(item.total_price || (item.unit_price * item.quantity) || 0).toLocaleString('id-ID')}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        itemsListHtml = '<p style="color: var(--text-secondary);">Tidak ada detail item.</p>';
+                    }
+
+                    modalBody.innerHTML = `
+                        <div style="display: grid; gap: 20px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; background: var(--unm-light-blue); padding: 16px; border-radius: 8px;">
+                                <div><small style="color: var(--text-secondary);">No. Pesanan</small><div style="font-weight: 700; font-family: monospace; color: var(--unm-navy);">${order.order_number}</div></div>
+                                <div><small style="color: var(--text-secondary);">Tanggal</small><div style="font-weight: 500;">${new Date(order.created_at).toLocaleString('id-ID')}</div></div>
+                                <div><small style="color: var(--text-secondary);">Status Pesanan</small><div><span class="status-badge status-${order.status}">${order.status}</span></div></div>
+                                <div><small style="color: var(--text-secondary);">Status Pembayaran</small><div><span class="status-badge status-${order.payment_status === 'paid' ? 'completed' : 'processing'}">${order.payment_status}</span></div></div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div style="border: 1px solid var(--border-color); padding: 16px; border-radius: 8px;">
+                                    <h4 style="margin: 0 0 12px; color: var(--unm-navy);">Informasi Pelanggan</h4>
+                                    <div style="font-size: 14px; line-height: 1.6;">
+                                        <div><strong>Nama:</strong> ${order.customer_name}</div>
+                                        <div><strong>Email:</strong> ${order.customer_email}</div>
+                                        <div><strong>Telepon:</strong> ${order.customer_phone || '-'}</div>
+                                        <div><strong>Institusi/Unit:</strong> ${order.customer_institution || '-'}</div>
+                                    </div>
+                                </div>
+                                <div style="border: 1px solid var(--border-color); padding: 16px; border-radius: 8px;">
+                                    <h4 style="margin: 0 0 12px; color: var(--unm-navy);">Alamat & Catatan</h4>
+                                    <div style="font-size: 14px; line-height: 1.6;">
+                                        <div><strong>Alamat:</strong> ${order.customer_address || '-'}</div>
+                                        <div><strong>Catatan:</strong> ${order.notes || '-'}</div>
+                                        <div><strong>Metode Bayar:</strong> ${(order.payment_method || 'Midtrans').toUpperCase()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 style="margin: 0 0 12px; color: var(--unm-navy);">Daftar Produk Pesanan</h4>
+                                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0 16px;">
+                                    ${itemsListHtml}
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                                <div>
+                                    <span style="color: var(--text-secondary); font-size: 13px;">Subtotal: Rp ${(order.subtotal || 0).toLocaleString('id-ID')}</span>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 800; color: var(--unm-navy);">
+                                    Total: Rp ${(order.total || 0).toLocaleString('id-ID')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } catch (e) {
+                    modalBody.innerHTML = '<p style="color: #dc2626; padding: 24px; text-align: center;">Gagal memuat detail pesanan: ' + e.message + '</p>';
+                }
+            });
+        });
+
+        // Close modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('orderModal').style.display = 'none';
+        });
+
+        document.getElementById('orderModal').addEventListener('click', (e) => {
+            if (e.target.id === 'orderModal') {
+                e.target.style.display = 'none';
+            }
+        });
+
+        // Delete order handler
+        document.querySelectorAll('.delete-order').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const orderId = this.dataset.orderId;
+                const orderNum = this.dataset.orderNumber;
+                
+                if (!confirm(`Apakah Anda yakin ingin menghapus pesanan #${orderNum} secara permanen?`)) {
+                    return;
+                }
+
+                this.disabled = true;
+                try {
+                    const response = await fetch(`/admin/orders/${orderId}/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.message || 'Gagal menghapus');
+                    
+                    // Remove row with fade effect
+                    const row = this.closest('tr');
+                    if (row) {
+                        row.style.transition = 'opacity 0.3s ease';
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 300);
+                    }
+                } catch (err) {
+                    alert('Gagal menghapus pesanan: ' + err.message);
+                    this.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

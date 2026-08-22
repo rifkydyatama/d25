@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Produk - Admin D25</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'products' }) %>
+        
+        <main class="admin-main">
+            <div class="admin-header">
+                <div>
+                    <h1>Kelola Produk</h1>
+                    <p style="color: var(--text-secondary); margin-top: 4px;">Kelola katalog produk merchandise & perlengkapan D25</p>
+                </div>
+                <button id="addProductBtn" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Tambah Produk
+                </button>
+            </div>
+            
+            <section class="admin-section">
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Gambar</th>
+                                <th>Nama Produk</th>
+                                <th>Kategori</th>
+                                <th>Harga</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <% if (products.length === 0) { %>
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-secondary);">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                                    <div>Belum ada produk yang ditambahkan.</div>
+                                </td>
+                            </tr>
+                            <% } else { %>
+                            <% products.forEach(product => { %>
+                            <tr data-id="<%= product.id %>">
+                                <td>
+                                    <% if (product.image || product.imageUrl) { %>
+                                        <img src="<%= product.image || product.imageUrl %>" alt="<%= product.name %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">
+                                    <% } else { %>
+                                        <div style="width: 50px; height: 50px; background: var(--unm-light-blue); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px;">📦</div>
+                                    <% } %>
+                                </td>
+                                <td style="font-weight: 500; color: var(--text-primary);"><%= product.name %></td>
+                                <td><span class="product-category" style="background: var(--unm-light-blue); color: var(--unm-blue); padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;"><%= product.category %></span></td>
+                                <td style="font-weight: 600; color: var(--unm-navy);"><%= formatRupiah(product.price) %></td>
+                                <td>
+                                    <span class="status-badge <%= product.popular ? 'status-completed' : (product.active !== false ? 'status-processing' : 'status-cancelled') %>">
+                                        <%= product.active !== false ? (product.popular ? 'Populer' : 'Aktif') : 'Nonaktif' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 8px;">
+                                        <a href="/product/<%= product.id %>" class="btn-icon" aria-label="Lihat detail" target="_blank" title="Lihat di situs">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        </a>
+                                        <button class="btn-icon edit-product" data-id="<%= product.id %>" aria-label="Edit produk" title="Edit Produk">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                        <button class="btn-icon delete delete-product" data-id="<%= product.id %>" aria-label="Hapus produk" title="Hapus Produk">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }) %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 24px;">
+        <div class="modal-content" style="background: var(--white); border-radius: var(--radius); width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-medium);">
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="modalTitle" style="margin: 0; color: var(--unm-navy); font-size: 20px;">Tambah Produk</h2>
+                <button id="closeProductModal" class="btn-icon" style="width: 36px; height: 36px;" aria-label="Tutup">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form id="productForm" style="padding: 24px;">
+                <input type="hidden" name="id" id="productId">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="productName" style="font-weight: 600; display: block; margin-bottom: 6px;">Nama Produk <span class="required" style="color: #dc2626;">*</span></label>
+                    <input type="text" id="productName" name="name" required class="form-control" placeholder="Contoh: PDH D25 Teknologi Pendidikan">
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="productCategory" style="font-weight: 600; display: block; margin-bottom: 6px;">Kategori <span class="required" style="color: #dc2626;">*</span></label>
+                        <input type="text" id="productCategory" name="category" required class="form-control" placeholder="Pakaian, Merchandise, Aksesoris, dll">
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice" style="font-weight: 600; display: block; margin-bottom: 6px;">Harga (Rp) <span class="required" style="color: #dc2626;">*</span></label>
+                        <input type="number" id="productPrice" name="price" required min="0" class="form-control" placeholder="Contoh: 140000">
+                    </div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="productOriginalPrice" style="font-weight: 600; display: block; margin-bottom: 6px;">Harga Coret / Asli (Rp)</label>
+                        <input type="number" id="productOriginalPrice" name="originalPrice" min="0" class="form-control" placeholder="Opsional untuk diskon">
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; justify-content: center;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">Status Produk</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="productPopular" name="popular" value="true" style="width: 18px; height: 18px; accent-color: var(--unm-blue);">
+                            <label for="productPopular" style="margin: 0; cursor: pointer; font-size: 14px;">Tampilkan sebagai Populer</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="productImage" style="font-weight: 600; display: block; margin-bottom: 6px;">URL Gambar Produk</label>
+                    <input type="text" id="productImage" name="imageUrl" class="form-control" placeholder="https://... atau /images/pdh-d25.png">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="productDescription" style="font-weight: 600; display: block; margin-bottom: 6px;">Deskripsi Produk</label>
+                    <textarea id="productDescription" name="description" rows="4" class="form-control" placeholder="Deskripsi lengkap bahan, spesifikasi, panduan ukuran, dll."></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline" id="cancelProductForm">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveProductBtn">Simpan Produk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius); font-size: 14px; font-family: inherit; box-sizing: border-box; }
+        .form-control:focus { outline: none; border-color: var(--unm-blue); box-shadow: 0 0 0 3px var(--unm-light-blue); }
+    </style>
+
+    <script>
+        const modal = document.getElementById('productModal');
+        const form = document.getElementById('productForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const saveBtn = document.getElementById('saveProductBtn');
+        
+        // Open modal for add
+        document.getElementById('addProductBtn').addEventListener('click', () => {
+            form.reset();
+            document.getElementById('productId').value = '';
+            modalTitle.textContent = 'Tambah Produk';
+            saveBtn.textContent = 'Simpan Produk';
+            modal.style.display = 'flex';
+        });
+        
+        // Open modal for edit
+        document.querySelectorAll('.edit-product').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                modalTitle.textContent = 'Edit Produk';
+                saveBtn.textContent = 'Perbarui Produk';
+                
+                try {
+                    const response = await fetch(`/admin/api/products/${id}`);
+                    const product = await response.json();
+                    
+                    if (product) {
+                        document.getElementById('productId').value = product.id;
+                        document.getElementById('productName').value = product.name || '';
+                        document.getElementById('productCategory').value = product.category || '';
+                        document.getElementById('productPrice').value = product.price || 0;
+                        document.getElementById('productOriginalPrice').value = product.originalPrice || product.original_price || '';
+                        document.getElementById('productPopular').checked = Boolean(product.popular);
+                        document.getElementById('productImage').value = product.image || product.imageUrl || product.image_url || '';
+                        document.getElementById('productDescription').value = product.description || '';
+                        modal.style.display = 'flex';
+                    }
+                } catch (e) {
+                    alert('Gagal memuat data produk: ' + e.message);
+                }
+            });
+        });
+        
+        // Close modal
+        function closeProductModal() {
+            modal.style.display = 'none';
+        }
+        
+        document.getElementById('closeProductModal').addEventListener('click', closeProductModal);
+        document.getElementById('cancelProductForm').addEventListener('click', closeProductModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeProductModal(); });
+        
+        // Submit form
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Menyimpan...';
+            
+            const id = document.getElementById('productId').value;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            data.popular = document.getElementById('productPopular').checked;
+            data.price = parseInt(data.price) || 0;
+            data.originalPrice = data.originalPrice ? parseInt(data.originalPrice) : null;
+            
+            const url = id ? `/admin/products/${id}` : '/admin/products';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (response.ok && result.success !== false) {
+                    closeProductModal();
+                    location.reload();
+                } else {
+                    alert('Gagal: ' + (result.message || 'Terjadi kesalahan'));
+                }
+            } catch (e) {
+                alert('Gagal menyimpan: ' + e.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = id ? 'Perbarui Produk' : 'Simpan Produk';
+            }
+        });
+        
+        // Delete product
+        document.querySelectorAll('.delete-product').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return;
+                
+                const id = this.dataset.id;
+                const row = this.closest('tr');
+                
+                try {
+                    const response = await fetch(`/admin/products/${id}/delete`, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    
+                    if (response.ok) {
+                        row.remove();
+                    } else {
+                        alert('Gagal menghapus produk');
+                    }
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

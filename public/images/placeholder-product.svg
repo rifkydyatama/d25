@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#002B5C"/>
+      <stop offset="100%" stop-color="#004E8C"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#bgGrad)"/>
+  <circle cx="300" cy="180" r="70" fill="rgba(255,255,255,0.06)" stroke="#C8A94E" stroke-width="2"/>
+  <text x="300" y="195" font-size="50" text-anchor="middle">📦</text>
+  <text x="300" y="285" font-family="'Inter', system-ui, sans-serif" font-size="20" fill="#FFFFFF" text-anchor="middle" font-weight="700">D25 Merchandise</text>
+  <text x="300" y="315" font-family="'Inter', system-ui, sans-serif" font-size="13" fill="#C8A94E" text-anchor="middle">Teknologi Pendidikan UM</text>
+</svg>

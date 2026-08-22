@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kesalahan Server - D25 Teknologi Pendidikan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/header.ejs') %>
+
+    <section class="success-page" style="min-height: 60vh;">
+        <div class="container">
+            <div class="success-card" style="max-width: 500px;">
+                <div style="font-size: 80px; margin-bottom: 24px; color: #EF4444;">500</div>
+                <h1>Kesalahan Server Internal</h1>
+                <p>Maaf, terjadi kesalahan pada server kami. Tim teknis kami sudah diberitahu dan sedang memperbaikinya.</p>
+                
+                <div style="background: var(--light-gray); border-radius: var(--radius); padding: 20px; margin: 24px 0; text-align: left;">
+                    <h4 style="color: var(--unm-navy); margin-bottom: 12px;">Apa yang bisa Anda lakukan:</h4>
+                    <ul style="font-size: 14px; color: var(--text-secondary); line-height: 2; padding-left: 20px;">
+                        <li>Coba muat ulang halaman ini beberapa saat lagi</li>
+                        <li>Kembali ke <a href="/" style="color: var(--unm-blue);">Beranda</a></li>
+                        <li>Jika masalah berlanjut, hubungi kami via <a href="mailto:d25teknopendidikan@um.ac.id" style="color: var(--unm-blue);">email</a> atau <a href="https://wa.me/6281234567890" style="color: var(--unm-blue);">WhatsApp</a></li>
+                    </ul>
+                </div>
+                
+                <a href="/" class="btn btn-primary back-home-btn" style="width: 100%;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Kembali ke Beranda
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>

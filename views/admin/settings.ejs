@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan - Admin D25</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .fee-table { width: 100%; border-collapse: collapse; }
+        .fee-table th { background: var(--bg-secondary, #f8fafc); font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px; text-align: left; }
+        .fee-table td { padding: 10px 14px; border-top: 1px solid var(--border-color); font-size: 14px; vertical-align: middle; }
+        .fee-table tr:last-child td { border-bottom: 1px solid var(--border-color); }
+        .fee-table input[type="number"], .fee-table select { width: 100%; padding: 6px 10px; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 13px; font-family: inherit; background: white; }
+        .fee-table input[type="number"]:focus, .fee-table select:focus { outline: none; border-color: var(--unm-blue); }
+        .fee-table .method-label { font-weight: 600; color: var(--text-primary); }
+        .fee-table .method-snap { font-size: 11px; color: var(--text-secondary); }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 24px; transition: .2s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+        .toggle-switch input:checked + .toggle-slider { background: var(--unm-blue, #004e8c); }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+        .po-settings-card { background: linear-gradient(135deg,#f0f7ff,#e8f4ff); border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 20px; margin-top: 16px; }
+        .po-settings-card h4 { font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 12px; }
+        .settings-alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .settings-alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .settings-alert.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'settings' }) %>
+        
+        <main class="admin-main">
+            <div class="admin-header">
+                <div>
+                    <h1>Pengaturan Toko</h1>
+                    <p style="color: var(--text-secondary); margin-top: 4px;">Kelola informasi toko, biaya layanan pembayaran, sistem Pre Order, dan email</p>
+                </div>
+            </div>
+
+            <% if (query && query.saved) { %>
+            <div class="settings-alert success">✅ Pengaturan berhasil disimpan!</div>
+            <% } else if (query && query.error) { %>
+            <div class="settings-alert error">❌ <%= query.error %></div>
+            <% } %>
+
+            <!-- INFORMASI TOKO -->
+            <section class="admin-section">
+                <div class="admin-section-header"><h2>Informasi Toko</h2></div>
+                <form action="/admin/settings" method="POST" class="checkout-form-card">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="site_name">Nama Toko <span class="required">*</span></label>
+                            <input type="text" id="site_name" name="site_name" value="<%= settings.site_name?.toString().replace(/"/g, '') || 'D25 Teknologi Pendidikan' %>" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact_phone">Telepon <span class="required">*</span></label>
+                            <input type="tel" id="contact_phone" name="contact_phone" value="<%= settings.contact_phone?.toString().replace(/"/g, '') || '+62 812-3456-7890' %>" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="site_description">Deskripsi Toko</label>
+                        <textarea id="site_description" name="site_description" rows="3" class="form-control"><%= settings.site_description?.toString().replace(/"/g, '') || 'Program Studi Teknologi Pendidikan, Fakultas Ilmu Pendidikan, Universitas Negeri Malang' %></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact_email">Email Kontak</label>
+                            <input type="email" id="contact_email" name="contact_email" value="<%= settings.contact_email?.toString().replace(/"/g, '') || 'd25teknopendidikan@um.ac.id' %>" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="max_cart_quantity">Maks. Kuantitas per Item</label>
+                            <input type="number" id="max_cart_quantity" name="max_cart_quantity" value="<%= settings.max_cart_quantity?.toString().replace(/"/g, '') || '10' %>" min="1" max="100" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact_address">Alamat Lengkap</label>
+                        <textarea id="contact_address" name="contact_address" rows="3" class="form-control"><%= settings.contact_address?.toString().replace(/"/g, '') || 'Jl. Semarang No.5, Sumbersari, Kec. Lowokwaru, Kota Malang, Jawa Timur 65145' %></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Simpan Informasi Toko</button>
+                </form>
+            </section>
+
+            <!-- BIAYA LAYANAN PEMBAYARAN -->
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <h2>Biaya Layanan per Metode Pembayaran</h2>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Biaya ini ditanggung pembeli untuk menutupi biaya admin Midtrans (MDR). Atur <b>Flat</b> (Rp) atau <b>Persentase</b> (%). Nonaktifkan metode yang tidak ingin ditampilkan.</p>
+                </div>
+                <form action="/admin/settings/payment-fees" method="POST" class="checkout-form-card">
+                    <div style="overflow-x:auto;">
+                    <table class="fee-table">
+                        <thead>
+                            <tr>
+                                <th>Aktif</th>
+                                <th>Metode Pembayaran</th>
+                                <th>Tipe Biaya</th>
+                                <th>Nilai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <% const feeKeys = Object.keys(paymentFees); feeKeys.forEach(key => { const m = paymentFees[key]; %>
+                        <tr>
+                            <td>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="fee_active_<%= key %>" value="1" <%= m.active !== false ? 'checked' : '' %>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="method-label"><%= m.name %></div>
+                                <div class="method-snap"><%= m.isPreorder ? '⚡ Mode Pre Order' : (m.snapType || '-') %></div>
+                            </td>
+                            <td>
+                                <select name="fee_type_<%= key %>">
+                                    <option value="flat" <%= m.type === 'flat' ? 'selected' : '' %>>Flat (Rp)</option>
+                                    <option value="percent" <%= m.type === 'percent' ? 'selected' : '' %>>Persentase (%)</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" name="fee_value_<%= key %>" value="<%= m.value %>" step="0.01" min="0" placeholder="0">
+                            </td>
+                        </tr>
+                        <% }); %>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                        <button type="submit" class="btn btn-primary">💾 Simpan Biaya Layanan</button>
+                        <span style="font-size:12px;color:var(--text-secondary);">Perubahan langsung berlaku di halaman checkout.</span>
+                    </div>
+                </form>
+            </section>
+
+            <!-- SIZE SURCHARGE SETTINGS -->
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <h2>Harga Tambahan Ukuran</h2>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Atur biaya tambahan untuk setiap ukuran. Nilai ini otomatis dipakai di halaman produk, keranjang, checkout, dan rincian pesanan.</p>
+                </div>
+                <form action="/admin/settings/size-pricing" method="POST" class="checkout-form-card">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="size_s">S</label>
+                            <input type="number" id="size_s" name="size_s" value="<%= Number(sizePricing?.S || 0) %>" min="0" step="1000" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="size_m">M</label>
+                            <input type="number" id="size_m" name="size_m" value="<%= Number(sizePricing?.M || 0) %>" min="0" step="1000" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="size_l">L</label>
+                            <input type="number" id="size_l" name="size_l" value="<%= Number(sizePricing?.L || 0) %>" min="0" step="1000" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="size_xl">XL</label>
+                            <input type="number" id="size_xl" name="size_xl" value="<%= Number(sizePricing?.XL || 0) %>" min="0" step="1000" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="size_xxl">XXL</label>
+                            <input type="number" id="size_xxl" name="size_xxl" value="<%= Number(sizePricing?.XXL || 0) %>" min="0" step="1000" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="size_xxxl">XXXL</label>
+                            <input type="number" id="size_xxxl" name="size_xxxl" value="<%= Number(sizePricing?.XXXL || 0) %>" min="0" step="1000" class="form-control">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Harga Ukuran</button>
+                </form>
+            </section>
+
+            <!-- PRE ORDER SETTINGS -->
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <h2>Pengaturan Pre Order (PO)</h2>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Aktifkan mode PO agar pembeli bisa memesan dengan membayar DP terlebih dahulu.</p>
+                </div>
+                <form action="/admin/settings/preorder" method="POST" class="checkout-form-card">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label style="display:flex;align-items:center;gap:10px;font-weight:600;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="po_enabled" name="po_enabled" value="1" <%= (settings.po_enabled?.toString() === '1' || settings.po_enabled === true || settings.po_enabled === 'true') ? 'checked' : '' %>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                Aktifkan Mode Pre Order
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="po_dp_percentage">Persentase DP / Uang Muka (%)</label>
+                            <input type="number" id="po_dp_percentage" name="po_dp_percentage" value="<%= settings.po_dp_percentage?.toString().replace(/"/g,'') || '50' %>" min="1" max="100" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="po_deadline_days">Estimasi Waktu Pengerjaan (hari)</label>
+                        <input type="number" id="po_deadline_days" name="po_deadline_days" value="<%= settings.po_deadline_days?.toString().replace(/"/g,'') || '14' %>" min="1" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="po_description">Keterangan PO (ditampilkan ke pembeli)</label>
+                        <textarea id="po_description" name="po_description" rows="3" class="form-control"><%= settings.po_description?.toString().replace(/"/g,'') || 'Produk ini merupakan Pre Order. Pembayaran DP dilakukan sekarang, pelunasan setelah produk siap.' %></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Pengaturan PO</button>
+                </form>
+            </section>
+
+            <!-- EMAIL SETTINGS -->
+            <section class="admin-section">
+                <div class="admin-section-header"><h2>Konfigurasi Email (Opsional)</h2></div>
+                <form action="/admin/settings/email" method="POST" class="checkout-form-card">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email_host">SMTP Host</label>
+                            <input type="text" id="email_host" name="email_host" value="<%= settings.email_host?.toString().replace(/"/g, '') || 'smtp.gmail.com' %>" class="form-control" placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="email_port">SMTP Port</label>
+                            <input type="number" id="email_port" name="email_port" value="<%= settings.email_port?.toString().replace(/"/g, '') || '587' %>" class="form-control" placeholder="587">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email_user">Email Pengirim</label>
+                            <input type="email" id="email_user" name="email_user" value="<%= settings.email_user?.toString().replace(/"/g, '') || '' %>" class="form-control" placeholder="noreply@domain.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="email_pass">App Password</label>
+                            <input type="password" id="email_pass" name="email_pass" value="<%= settings.email_pass?.toString().replace(/"/g, '') || '' %>" class="form-control" placeholder="App password">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_from">Nama Pengirim</label>
+                        <input type="text" id="email_from" name="email_from" value="<%= settings.email_from?.toString().replace(/"/g, '') || 'D25 Teknologi Pendidikan <noreply@d25teknopendidikan.com>' %>" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Simpan Konfigurasi Email</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    // Auto-hide alert after 4s
+    const alert = document.querySelector('.settings-alert');
+    if (alert) setTimeout(() => alert.style.opacity = '0', 4000);
+    </script>
+</body>
+</html>

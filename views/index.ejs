@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D25 Teknologi Pendidikan | Universitas Negeri Malang</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/header.ejs', { currentPage: 'home' }) %>
+
+    <section class="hero">
+        <div class="container hero-content">
+            <span class="hero-badge">D25 Teknologi Pendidikan - Universitas Negeri Malang</span>
+            <h1>Produk Unggulan D25 Teknologi Pendidikan</h1>
+            <p class="hero-subtitle">Produk Berkualitas untuk Kebutuhan Digital & Lifestyle</p>
+            <p class="hero-description">Menyediakan produk-produk berkualitas dari berbagai kategori: Elektronik, Fashion, Rumah Tangga, Kesehatan, Olahraga, Digital, dan Bundle hemat.</p>
+            <a href="/products" class="btn btn-primary">Lihat Semua Produk</a>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Produk Populer</h2>
+                <p class="section-subtitle">Produk dengan rating tertinggi dan paling diminati</p>
+            </div>
+            <div class="products-grid">
+                <% products.filter(p => p.popular || true).slice(0, 6).forEach(product => { %>
+                <article class="product-card">
+                    <div class="product-image-wrapper">
+                        <img src="<%= product.image || product.imageUrl || '/images/product-pdh.svg' %>" alt="<%= product.name %>" loading="lazy" onerror="this.onerror=null; this.src='/images/placeholder-product.svg';">
+                        <span class="product-badge">Populer</span>
+                        <% if (product.isDigital) { %>
+                            <span class="product-badge digital-badge">Digital</span>
+                        <% } %>
+                        <% if (product.stock !== undefined && product.stock === 0) { %>
+                            <span class="product-badge sold-out-badge">Habis</span>
+                        <% } %>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category"><%= product.category %></span>
+                        <% if (product.brand) { %>
+                            <span class="product-brand"><%= product.brand %></span>
+                        <% } %>
+                        <h3><%= product.name %></h3>
+                        <div class="product-meta">
+                            <% if (product.brand) { %>
+                            <div class="product-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"></path><path d="M12 6v6l4 2"></path></svg>
+                                <span><%= product.brand %></span>
+                            </div>
+                            <% } %>
+                            <% if (product.stock !== undefined) { %>
+                            <div class="product-meta-item <%= product.stock === 0 ? 'out-of-stock' : '' %>">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                                <span><%= product.stock > 0 ? 'Stok: ' + product.stock : 'Habis' %></span>
+                            </div>
+                            <% } %>
+                            <% if (product.warrantyMonths) { %>
+                            <div class="product-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <span>Garansi: <%= product.warrantyMonths %> bln</span>
+                            </div>
+                            <% } %>
+                            <% if (product.isDigital) { %>
+                            <div class="product-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                <span>Digital</span>
+                            </div>
+                            <% } %>
+                            <% if (product.duration) { %>
+                            <div class="product-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <span><%= product.duration %></span>
+                            </div>
+                            <% } %>
+                            <% if (product.level) { %>
+                            <div class="product-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                <span>Level: <%= product.level %></span>
+                            </div>
+                            <% } %>
+                            <% if (product.instructor) { %>
+                            <div class="product-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <span><%= product.instructor %></span>
+                            </div>
+                            <% } %>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current"><%= formatRupiah(product.price) %></span>
+                            <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                            <span class="price-original"><%= formatRupiah(product.originalPrice) %></span>
+                            <% } %>
+                        </div>
+                        <a href="/product/<%= product.id %>" class="btn btn-outline" style="width: 100%; margin-top: 16px;">Lihat Detail</a>
+                    </div>
+                </article>
+                <% }) %>
+            </div>
+            <div class="section-header" style="margin-top: 32px;">
+                <a href="/products" class="btn btn-primary">Lihat Semua Produk</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Mengapa Belanja di D25 Teknologi Pendidikan?</h2>
+                <p class="section-subtitle">Komitmen kami untuk memberikan pengalaman belanja terbaik</p>
+            </div>
+            <div class="features-grid">
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    </div>
+                    <h3>Produk Berkualitas</h3>
+                    <p>Produk tercurasi dari brand terpercaya dengan kualitas terjamin dan garansi resmi.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <h3>Harga Kompetitif</h3>
+                    <p>Harga terbaik langsung dari distributor resmi, hemat hingga 50% dari harga pasaran.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    </div>
+                    <h3>Pengiriman Cepat</h3>
+                    <p>Pengiriman ke seluruh Indonesia dengan kurir terpercaya, real-time tracking.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <h3>Garansi & Retur Mudah</h3>
+                    <p>Garansi resmi brand, retur 7 hari no ribet, refund cepat ke rekening Anda.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="container">
+            <h2>Siap Temukan Produk Favorit Anda?</h2>
+            <p>Jelajahi ribuan produk berkualitas dari berbagai kategori dengan harga terbaik dan pengiriman cepat ke seluruh Indonesia.</p>
+            <a href="/products" class="btn btn-secondary">Mulai Belanja Sekarang</a>
+        </div>
+    </section>
+
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>

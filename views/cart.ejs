@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang Belanja - D25 Teknologi Pendidikan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/header.ejs', { currentPage: 'cart' }) %>
+
+    <section class="page-header">
+        <div class="container">
+            <h1>Keranjang Belanja</h1>
+            <p>Periksa kembali pesanan Anda sebelum melanjutkan ke pembayaran</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <% if (cart.length === 0) { %>
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <h2>Keranjang Belanja Kosong</h2>
+                    <p>Anda belum menambahkan produk apapun. Silakan jelajahi katalog produk kami.</p>
+                    <a href="/products" class="btn btn-primary mt-3">Mulai Belanja</a>
+                </div>
+            <% } else { %>
+                <div class="cart-layout">
+                    <div>
+                        <div class="cart-table-wrapper">
+                            <table class="cart-table" role="grid">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Produk</th>
+                                        <th scope="col">Harga</th>
+                                        <th scope="col">Jumlah</th>
+                                        <th scope="col">Subtotal</th>
+                                        <th scope="col"><span class="visually-hidden">Aksi</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% cart.forEach(item => { %>
+                                    <tr class="cart-item" data-id="<%= item.id %>" data-size="<%= item.size || '' %>">
+                                        <td>
+                                            <div class="cart-item-info">
+                                                <img src="<%= item.image %>" alt="<%= item.name %>" class="cart-item-image" loading="lazy">
+                                                <div class="cart-item-details">
+                                                    <h4 class="cart-item-name"><%= item.name %></h4>
+                                                    <span class="cart-item-category"><%= item.category %></span>
+                                                    <% if (item.size) { %>
+                                                    <div class="cart-item-size">Ukuran: <%= item.size %></div>
+                                                    <% if (item.sizePrice > 0) { %>
+                                                    <div class="cart-item-size" style="color: #dc2626;">Biaya ukuran: <%= formatRupiah(item.sizePrice) %></div>
+                                                    <% } %>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="cart-item-price"><%= formatRupiah(item.price) %></td>
+                                        <td>
+                                            <div class="quantity-controls">
+                                                <button type="button" class="quantity-btn-sm qty-decrease" aria-label="Kurangi jumlah" data-id="<%= item.id %>">−</button>
+                                                <input type="number" class="quantity-input-sm qty-input" value="<%= item.quantity %>" min="1" max="10" readonly data-id="<%= item.id %>">
+                                                <button type="button" class="quantity-btn-sm qty-increase" aria-label="Tambah jumlah" data-id="<%= item.id %>">+</button>
+                                            </div>
+                                        </td>
+                                        <td class="cart-item-subtotal"><%= formatRupiah(item.price * item.quantity) %></td>
+                                        <td>
+                                            <form action="/remove-from-cart/<%= item.id %><%= item.size ? '?size=' + encodeURIComponent(item.size) : '' %>" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn-icon delete" aria-label="Hapus <%= item.name %> dari keranjang">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <aside>
+                        <div class="cart-summary-card">
+                            <h2>Ringkasan Pesanan</h2>
+                            <div class="summary-row">
+                                <span>Subtotal (<%= cart.length %> item<%= cart.length > 1 ? 's' : '' %>)</span>
+                                <span><%= formatRupiah(subtotal) %></span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total</span>
+                                <span><%= formatRupiah(total) %></span>
+                            </div>
+                            <div class="cart-actions">
+                                <a href="/products" class="btn btn-continue">Lanjutkan Belanja</a>
+                                <a href="/checkout" class="btn btn-primary">Lanjut ke Pembayaran</a>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            <% } %>
+        </div>
+    </section>
+
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.qty-decrease').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const input = document.querySelector(`.qty-input[data-id="${id}"]`);
+                    const row = input.closest('tr');
+                    const size = row ? row.dataset.size || '' : '';
+                    const val = Math.max(1, parseInt(input.value) - 1);
+                    input.value = val;
+                    updateCartQuantity(id, val, size);
+                });
+            });
+            
+            document.querySelectorAll('.qty-increase').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const input = document.querySelector(`.qty-input[data-id="${id}"]`);
+                    const row = input.closest('tr');
+                    const size = row ? row.dataset.size || '' : '';
+                    const val = Math.min(10, parseInt(input.value) + 1);
+                    input.value = val;
+                    updateCartQuantity(id, val, size);
+                });
+            });
+            
+            function updateCartQuantity(productId, quantity, size) {
+                fetch('/update-cart/' + productId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantity, size })
+                }).then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+            }
+        });
+    </script>
+    <style>
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    </style>
+</body>
+</html>

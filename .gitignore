@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.development.local
+.vercel/
+.vscode/
+logs/
+uploads/
+.DS_Store
+*.log
+npm-debug.log*
+coverage/
+.git/
+

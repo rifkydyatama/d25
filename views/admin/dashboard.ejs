@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - D25 Teknologi Pendidikan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'dashboard' }) %>
+        
+        <main class="admin-main">
+            <div class="admin-header">
+                <div>
+                    <h1>Dashboard Admin</h1>
+                    <p style="color: var(--text-secondary); margin-top: 4px;">Selamat datang, <%= typeof user !== 'undefined' && user ? user.username : 'Admin' %></p>
+                </div>
+                <a href="/" class="btn btn-outline" style="padding: 10px 20px; font-size: 14px;" target="_blank">Lihat Situs</a>
+            </div>
+            
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value"><%= typeof stats !== 'undefined' && stats.totalProducts ? stats.totalProducts : products.length %></div>
+                        <div class="stat-label">Total Produk</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #dcfce7; color: #16a34a;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value"><%= typeof stats !== 'undefined' ? stats.totalOrders || 0 : 0 %></div>
+                        <div class="stat-label">Total Pesanan</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value"><%= typeof stats !== 'undefined' && stats.totalRevenue ? 'Rp ' + stats.totalRevenue.toLocaleString('id-ID') : 'Rp 0' %></div>
+                        <div class="stat-label">Total Pendapatan</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #cce5ff; color: #0066cc;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value"><%= typeof stats !== 'undefined' ? (stats.pendingOrders || 0) + (stats.processingOrders || 0) : 0 %></div>
+                        <div class="stat-label">Pesanan Baru</div>
+                    </div>
+                </div>
+            </div>
+            
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <h2>Daftar Produk</h2>
+                    <a href="/admin/products" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">
+                        Kelola Produk
+                    </a>
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Gambar</th>
+                                <th>Nama Produk</th>
+                                <th>Kategori</th>
+                                <th>Harga</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (products.length === 0) { %>
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-secondary);">
+                                    Belum ada produk. <a href="/admin/products">Tambah produk sekarang</a>.
+                                </td>
+                            </tr>
+                            <% } else { %>
+                            <% products.slice(0, 10).forEach(product => { %>
+                            <tr>
+                                <td>
+                                    <% if (product.image || product.imageUrl) { %>
+                                        <img src="<%= product.image || product.imageUrl %>" alt="<%= product.name %>" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid var(--border-color);">
+                                    <% } else { %>
+                                        <div style="width:48px;height:48px;background:var(--unm-light-blue);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>
+                                    <% } %>
+                                </td>
+                                <td style="font-weight: 500; color: var(--text-primary);"><%= product.name %></td>
+                                <td><span class="product-category" style="background: var(--unm-light-blue); color: var(--unm-blue); padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;"><%= product.category %></span></td>
+                                <td style="font-weight: 600; color: var(--unm-navy);"><%= formatRupiah(product.price) %></td>
+                                <td>
+                                    <span class="status-badge <%= product.popular ? 'status-completed' : 'status-processing' %>">
+                                        <%= product.popular ? 'Populer' : 'Aktif' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 8px;">
+                                        <a href="/product/<%= product.id %>" class="btn-icon" aria-label="Lihat detail" target="_blank">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }) %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

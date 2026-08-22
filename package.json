@@ -1,0 +1,63 @@
+{
+  "name": "web-kelas-d25",
+  "version": "1.0.0",
+  "description": "D25 Teknologi Pendidikan - E-commerce Platform for Online Courses",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node server.production.js",
+    "dev": "cross-env NODE_ENV=development node server.js",
+    "prod": "cross-env NODE_ENV=production node server.production.js",
+    "build": "echo 'No build step required for API routes'",
+    "vercel-build": "echo 'Vercel build complete'",
+    "pm2": "pm2 start ecosystem.config.js --env production",
+    "pm2:reload": "pm2 reload ecosystem.config.js --env production",
+    "pm2:stop": "pm2 stop d25-teknopendidikan",
+    "pm2:logs": "pm2 logs d25-teknopendidikan",
+    "pm2:monit": "pm2 monit",
+    "docker:build": "docker build -t d25-teknopendidikan .",
+    "docker:run": "docker run -d -p 3000:3000 --env-file .env.production d25-teknopendidikan",
+    "docker:compose": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "deploy": "./deploy.sh production",
+    "deploy:staging": "./deploy.sh staging",
+    "migrate": "echo 'Run migrations manually in Supabase SQL Editor'",
+    "health": "curl -f http://localhost:3000/health || exit 1",
+    "lint": "echo 'Add ESLint config if needed'",
+    "test": "echo 'Add Jest/Vitest tests' && exit 0"
+  },
+  "keywords": [
+    "d25",
+    "teknologi-pendidikan",
+    "universitas-negeri-malang",
+    "ecommerce",
+    "midtrans",
+    "supabase"
+  ],
+  "author": "D25 Teknologi Pendidikan - Universitas Negeri Malang",
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "midtrans-client": "^1.4.3",
+    "morgan": "^1.11.0",
+    "nodemailer": "^9.0.5",
+    "serverless-http": "^4.0.0",
+    "uuid": "^14.0.2",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "pm2": "^6.0.0"
+  }
+}

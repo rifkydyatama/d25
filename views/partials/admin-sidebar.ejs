@@ -1,0 +1,49 @@
+<%
+  // currentPage: 'dashboard' | 'orders' | 'products' | 'analytics' | 'settings'
+  const navLinks = [
+    { href: '/admin', page: 'dashboard', label: 'Dashboard', icon: '<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect>' },
+    { href: '/admin/orders', page: 'orders', label: 'Kelola Pesanan', icon: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="2"></rect><path d="M9 12h6M9 16h4"></path>' },
+    { href: '/admin/products', page: 'products', label: 'Kelola Produk', icon: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>' },
+    { href: '/admin/analytics', page: 'analytics', label: 'Analitik', icon: '<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line>' },
+    { href: '/admin/settings', page: 'settings', label: 'Pengaturan', icon: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>' },
+  ];
+%>
+<aside class="admin-sidebar">
+    <div class="admin-sidebar-header">
+        <a href="/admin" class="logo">
+            <div class="logo-badge">D25</div>
+            <div class="logo-text">
+                <h1 style="font-size: 18px;">D25 Teknologi Pendidikan</h1>
+                <p style="font-size: 11px;">Panel Admin</p>
+            </div>
+        </a>
+    </div>
+    <nav aria-label="Navigasi admin">
+        <ul class="admin-nav">
+            <% navLinks.forEach(link => { %>
+            <li class="admin-nav-item">
+                <a href="<%= link.href %>" class="admin-nav-link <%= currentPage === link.page ? 'active' : '' %>">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><%- link.icon %></svg>
+                    <%= link.label %>
+                </a>
+            </li>
+            <% }) %>
+            <li class="admin-nav-item" style="margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="/" class="admin-nav-link" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    Lihat Situs
+                </a>
+            </li>
+            <li class="admin-nav-item">
+                <a href="/logout" class="admin-nav-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </nav>
+</aside>
+
+<style>
+    .admin-nav-link.active { background-color: var(--unm-gold) !important; color: var(--unm-navy) !important; }
+</style>

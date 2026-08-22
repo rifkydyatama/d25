@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Halaman Tidak Ditemukan - D25 Teknologi Pendidikan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/header.ejs') %>
+
+    <section class="success-page" style="min-height: 60vh;">
+        <div class="container">
+            <div class="success-card" style="max-width: 400px;">
+                <div style="font-size: 80px; margin-bottom: 24px; opacity: 0.3;">404</div>
+                <h1>Halaman Tidak Ditemukan</h1>
+                <p><%= typeof message !== 'undefined' ? message : 'Maaf, halaman yang Anda cari tidak tersedia.' %></p>
+                <a href="/" class="btn btn-primary back-home-btn" style="width: 100%; margin-top: 16px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Kembali ke Beranda
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>
