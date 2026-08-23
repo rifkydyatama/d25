@@ -13,10 +13,11 @@
     --text-primary: #212529;
     --text-secondary: #6C757D;
     --border-color: #DEE2E6;
-    --shadow-light: 0 2px 8px rgba(0, 43, 92, 0.08);
-    --shadow-medium: 0 4px 16px rgba(0, 43, 92, 0.12);
-    --radius: 6px;
-    --transition: all 0.2s ease;
+    --shadow-light: 0 4px 12px rgba(0, 43, 92, 0.05);
+    --shadow-medium: 0 8px 24px rgba(0, 43, 92, 0.08);
+    --shadow-glow: 0 8px 20px rgba(200, 169, 78, 0.35);
+    --radius: 12px;
+    --transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 * {
@@ -26,7 +27,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     line-height: 1.6;
     color: var(--text-primary);
     background-color: var(--white);
@@ -286,7 +287,7 @@ nav a.active::after {
     justify-content: center;
     gap: 8px;
     padding: 14px 28px;
-    border-radius: var(--radius);
+    border-radius: 50px;
     font-size: 15px;
     font-weight: 600;
     text-decoration: none;
@@ -305,7 +306,7 @@ nav a.active::after {
     background-color: #b8993e;
     border-color: #b8993e;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-glow);
 }
 
 .btn-outline {
@@ -384,9 +385,9 @@ nav a.active::after {
 }
 
 .product-card:hover {
-    border-color: var(--unm-blue);
-    box-shadow: var(--shadow-medium);
-    transform: translateY(-4px);
+    border-color: var(--unm-light-blue);
+    box-shadow: 0 12px 28px rgba(0, 43, 92, 0.1);
+    transform: translateY(-6px);
 }
 
 .product-image-wrapper {
