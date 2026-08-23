@@ -81,6 +81,44 @@
                                 </tbody>
                             </table>
                         </div>
+                        <!-- Mobile Cart View -->
+                        <div class="cart-mobile-list">
+                            <% cart.forEach(item => { %>
+                            <div class="cart-mobile-item" data-id="<%= item.id %>" data-size="<%= item.size || '' %>">
+                                <div class="cart-mobile-item-header">
+                                    <img src="<%= item.image %>" alt="<%= item.name %>" class="cart-mobile-item-image" loading="lazy">
+                                    <div class="cart-mobile-item-details">
+                                        <h4 class="cart-mobile-item-name"><%= item.name %></h4>
+                                        <span class="cart-mobile-item-category"><%= item.category %></span>
+                                        <% if (item.size) { %>
+                                        <div class="cart-mobile-item-size">Ukuran: <%= item.size %></div>
+                                        <% if (item.sizePrice > 0) { %>
+                                        <div class="cart-mobile-item-size" style="color: #dc2626;">Biaya ukuran: <%= formatRupiah(item.sizePrice) %></div>
+                                        <% } %>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <div class="cart-mobile-item-meta">
+                                    <span>Harga: <%= formatRupiah(item.price) %></span>
+                                    <span>Qty: <%= item.quantity %></span>
+                                </div>
+                                <div class="cart-mobile-item-controls">
+                                    <div class="cart-mobile-quantity">
+                                        <button type="button" class="cart-mobile-qty-btn" aria-label="Kurangi jumlah">−</button>
+                                        <input type="number" class="cart-mobile-qty-input" value="<%= item.quantity %>" min="1" max="10" readonly>
+                                        <button type="button" class="cart-mobile-qty-btn" aria-label="Tambah jumlah">+</button>
+                                    </div>
+                                    <div>
+                                        <form action="/remove-from-cart/<%= item.id %><%= item.size ? '?size=' + encodeURIComponent(item.size) : '' %>" method="POST" style="display: inline;">
+                                            <button type="submit" class="cart-mobile-remove" aria-label="Hapus <%= item.name %> dari keranjang">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2 2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                        </div>
                     </div>
                     <aside>
                         <div class="cart-summary-card">
@@ -128,6 +166,26 @@
                     const size = row ? row.dataset.size || '' : '';
                     const val = Math.min(10, parseInt(input.value) + 1);
                     input.value = val;
+                    updateCartQuantity(id, val, size);
+                });
+            });
+            
+            // Mobile quantity controls
+            document.querySelectorAll('.cart-mobile-qty-btn').forEach((btn, index) => {
+                btn.addEventListener('click', function() {
+                    const input = this.parentElement.querySelector('.cart-mobile-qty-input');
+                    let val = parseInt(input.value);
+                    if (this.textContent === '−') {
+                        val = Math.max(1, val - 1);
+                    } else {
+                        val = Math.min(10, val + 1);
+                    }
+                    input.value = val;
+                    
+                    // Find the corresponding item to get id and size
+                    const cartItem = this.closest('.cart-mobile-item');
+                    const id = cartItem.dataset.id;
+                    const size = cartItem.dataset.size || '';
                     updateCartQuantity(id, val, size);
                 });
             });

@@ -170,6 +170,58 @@ document.addEventListener('DOMContentLoaded', function() {
             fadeObserver.observe(el);
         });
     }
+
+    // Mobile Navigation Drawer
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileNavDrawer = document.getElementById('mobileNavDrawer');
+    const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+    const mobileNavCloseBtn = document.getElementById('mobileNavCloseBtn');
+
+    if (mobileMenuBtn && mobileNavDrawer && mobileNavOverlay) {
+        mobileMenuBtn.addEventListener('click', function() {
+            mobileNavDrawer.classList.add('open');
+            mobileNavOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
+        });
+
+        mobileNavCloseBtn.addEventListener('click', function() {
+            mobileNavDrawer.classList.remove('open');
+            mobileNavOverlay.classList.remove('open');
+            document.body.style.overflow = ''; // Restore scrolling
+        });
+
+        mobileNavOverlay.addEventListener('click', function() {
+            mobileNavDrawer.classList.remove('open');
+            mobileNavOverlay.classList.remove('open');
+            document.body.style.overflow = ''; // Restore scrolling
+        });
+    }
+
+    // Close mobile nav when clicking a link
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', function() {
+            const mobileNavDrawer = document.getElementById('mobileNavDrawer');
+            const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+            if (mobileNavDrawer && mobileNavOverlay) {
+                mobileNavDrawer.classList.remove('open');
+                mobileNavOverlay.classList.remove('open');
+                document.body.style.overflow = ''; // Restore scrolling
+            }
+        });
+    });
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(error => {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
 });
 
 // Add spin animation for loading
