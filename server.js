@@ -90,8 +90,8 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'd25-kelas-offering-secret-2026',
   resave: false,
   saveUninitialized: false,
-  cookie: { 
-    maxAge: 86400000, 
+  cookie: {
+    maxAge: 86400000,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     httpOnly: true
@@ -223,11 +223,11 @@ app.get('/product/:id', async (req, res) => {
     const { cartCount } = await getCartData(req);
     const product = await productService.getById(req.params.id);
     const sizePricing = await getSizePricingConfig();
-    
+
     if (!product) {
       return res.status(404).render('404', { message: 'Produk tidak ditemukan', cartCount, formatRupiah });
     }
-    
+
     res.render('product-detail', { product, cartCount, formatRupiah, currentPage: 'products', sizePricing });
   } catch (e) {
     console.error(e);
@@ -257,7 +257,7 @@ app.post('/add-to-cart/:id', async (req, res) => {
     const selectedSize = rawSize ? rawSize.toUpperCase() : null;
     const sizePricing = await getSizePricingConfig();
     const sizePrice = selectedSize ? Number(sizePricing[selectedSize] || 0) : 0;
-       
+
     // Verify product exists
     const product = await productService.getById(productId);
     if (!product) {
@@ -265,7 +265,7 @@ app.post('/add-to-cart/:id', async (req, res) => {
     }
 
     let cartId;
-      
+
     if (req.session.user?.id) {
       const cart = await cartService.getOrCreateCart(req.session.user.id, null);
       cartId = cart.id;
@@ -279,13 +279,13 @@ app.post('/add-to-cart/:id', async (req, res) => {
     }
 
     await cartService.addItem(cartId, productId, quantity, selectedSize, sizePrice);
-      
+
     const { cartCount } = await getCartData(req);
-    
+
     if (req.xhr || req.headers.accept?.includes('json')) {
       return res.json({ success: true, cartCount, message: 'Berhasil ditambahkan ke keranjang' });
     }
-    
+
     res.redirect('/cart');
   } catch (e) {
     console.error(e);
@@ -299,13 +299,13 @@ app.post('/update-cart/:id', async (req, res) => {
     const productId = req.params.id;
     const quantity = parseInt(req.body.quantity);
     const requestedSize = typeof req.body.size === 'string' ? req.body.size.trim() || null : (req.body.size || null);
-      
+
     if (isNaN(quantity) || quantity < 1) {
       return res.status(400).json({ success: false, message: 'Jumlah tidak valid' });
     }
 
     let cartId;
-      
+
     if (req.session.user?.id) {
       const cart = await cartService.getOrCreateCart(req.session.user.id, null);
       cartId = cart?.id;
@@ -319,7 +319,7 @@ app.post('/update-cart/:id', async (req, res) => {
     }
 
     await cartService.updateQuantity(cartId, productId, quantity, requestedSize);
-      
+
     const { cartCount } = await getCartData(req);
     res.json({ success: true, cartCount });
   } catch (e) {
@@ -334,7 +334,7 @@ app.post('/remove-from-cart/:id', async (req, res) => {
     const productId = req.params.id;
     const requestedSize = typeof req.query.size === 'string' ? req.query.size.trim() || null : (req.body?.size || null);
     let cartId;
-      
+
     if (req.session.user?.id) {
       const cart = await cartService.getOrCreateCart(req.session.user.id, null);
       cartId = cart?.id;
@@ -348,13 +348,13 @@ app.post('/remove-from-cart/:id', async (req, res) => {
     }
 
     await cartService.removeItem(cartId, productId, requestedSize);
-      
+
     const { cartCount } = await getCartData(req);
-      
+
     if (req.xhr || req.headers.accept?.includes('json')) {
       return res.json({ success: true, cartCount });
     }
-      
+
     res.redirect('/cart');
   } catch (e) {
     console.error(e);
@@ -405,7 +405,7 @@ function calculateDiscount(couponCode, subtotal, coupons, userId = null) {
   const code = (couponCode || '').toUpperCase().trim();
   const coupon = (coupons || {})[code];
   if (!coupon || !coupon.active) return { valid: false, message: 'Kode kupon tidak valid atau sudah tidak berlaku.' };
-  
+
   // Check expiration
   if (coupon.validUntil) {
     const expiry = new Date(coupon.validUntil);
@@ -413,18 +413,18 @@ function calculateDiscount(couponCode, subtotal, coupons, userId = null) {
       return { valid: false, message: 'Kupon sudah kadaluarsa.' };
     }
   }
-  
+
   // Check max total uses
   if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
     return { valid: false, message: 'Kupon sudah mencapai batas penggunaan maksimal.' };
   }
-  
+
   // Check max uses per user
   if (userId && coupon.maxUsesPerUser) {
     // Would need to check order history for this user + coupon
     // For now just track in session or skip if not implemented
   }
-  
+
   if (subtotal < coupon.minOrder) return { valid: false, message: `Minimal belanja ${formatRupiah(coupon.minOrder)} untuk menggunakan kupon ini.` };
 
   let discount = 0;
@@ -454,7 +454,7 @@ app.post('/api/validate-coupon', async (req, res) => {
 app.get('/checkout', async (req, res) => {
   try {
     const { cart, cartCount, subtotal, tax, total } = await getCartData(req);
-    
+
     if (!cart.length) {
       return res.redirect('/cart');
     }
@@ -476,8 +476,8 @@ app.get('/checkout', async (req, res) => {
 
     const poEnabled = settings.po_enabled === '1' || settings.po_enabled === true || settings.po_enabled === 'true';
     console.log('[DEBUG CHECKOUT] poEnabled:', poEnabled);
-    
-    res.render('checkout', { 
+
+    res.render('checkout', {
       cart, subtotal, tax: 0, total: subtotal, cartCount, formatRupiah,
       currentPage: 'checkout',
       paymentFees: activePaymentFees,
@@ -510,15 +510,15 @@ const { getPaymentFees, calculatePaymentFee } = require('./lib/paymentConfig');
 app.post('/checkout', async (req, res) => {
   try {
     const { name, email, phone, address, institution, notes, payment_method, is_preorder, coupon_code } = req.body;
-    
+
     if (!name || !email || !phone || !address || !payment_method) {
       if (req.accepts('json') || req.xhr) {
         return res.status(400).json({ success: false, message: 'Semua field wajib diisi.' });
       }
       const { cart, cartCount, subtotal } = await getCartData(req);
       const paymentFees = await getPaymentFees();
-      return res.render('checkout', { 
-        error: 'Semua field wajib diisi.', 
+      return res.render('checkout', {
+        error: 'Semua field wajib diisi.',
         cart, subtotal, tax: 0, total: subtotal, cartCount, formatRupiah, currentPage: 'checkout',
         paymentFees,
         poEnabled: false, poSettings: {},
@@ -604,14 +604,14 @@ app.post('/checkout', async (req, res) => {
     // Create Midtrans Snap transaction (charges DP amount for Pre-Order, or Full amount for regular)
     try {
       const snapPayload = buildSnapPayload(order);
-const snapResponse = await timeoutPromise(midtrans.createSnapTransaction(snapPayload), 10000);
-      
+      const snapResponse = await timeoutPromise(midtrans.createSnapTransaction(snapPayload), 10000);
+
       order.paymentToken = snapResponse.token;
       order.paymentRedirectUrl = snapResponse.redirect_url;
 
       if (req.accepts('json') || req.xhr) {
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           snapToken: snapResponse.token,
           redirectUrl: snapResponse.redirect_url,
           orderNumber: order.order_number,
@@ -623,19 +623,19 @@ const snapResponse = await timeoutPromise(midtrans.createSnapTransaction(snapPay
 
     } catch (midtransError) {
       console.error('Midtrans create error:', midtransError);
-      
+
       // If Midtrans fails, still save order and show success with manual payment info
       req.session.lastOrder = order;
-      
+
       if (req.accepts('json') || req.xhr) {
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           snapToken: null,
           orderNumber: order.order_number,
           message: 'Pesanan berhasil dibuat. Silakan hubungi admin untuk informasi pembayaran.'
         });
       }
-      
+
       return res.redirect('/order-success');
     }
   } catch (e) {
@@ -644,9 +644,9 @@ const snapResponse = await timeoutPromise(midtrans.createSnapTransaction(snapPay
       return res.status(500).json({ success: false, message: 'Gagal memproses pesanan: ' + e.message });
     }
     const { cart, cartCount, subtotal, tax, total } = await getCartData(req);
-    res.render('checkout', { 
-      error: 'Gagal memproses pesanan: ' + e.message, 
-      cart, subtotal, tax, total, cartCount, formatRupiah, currentPage: 'checkout' 
+    res.render('checkout', {
+      error: 'Gagal memproses pesanan: ' + e.message,
+      cart, subtotal, tax, total, cartCount, formatRupiah, currentPage: 'checkout'
     });
   }
 });
@@ -656,15 +656,15 @@ app.get('/order-success', async (req, res) => {
   try {
     const { cartCount } = await getCartData(req);
     let order = req.session.lastOrder;
-    
+
     if (!order && req.query.order) {
       const { orderService } = require('./lib/db');
       const orders = await orderService.getAll().catch(() => []);
       order = orders.find(o => o.order_number === req.query.order.trim()) || null;
     }
-    
+
     if (!order) return res.redirect('/');
-    
+
     delete req.session.lastOrder;
     res.render('order-success', { order, formatRupiah, cartCount, status: req.query.status || 'success' });
   } catch (e) {
@@ -678,10 +678,10 @@ app.get('/order-success', async (req, res) => {
 app.post('/payment/midtrans-notification', async (req, res) => {
   try {
     console.log('Midtrans Notification received:', req.body);
-    
+
     const notification = await timeoutPromise(midtrans.core.transactions.notification(req.body), 10000);
-    
-    const { 
+
+    const {
       order_id,
       transaction_status,
       fraud_status,
@@ -690,33 +690,33 @@ app.post('/payment/midtrans-notification', async (req, res) => {
       transaction_time,
       gross_amount
     } = notification;
-    
+
     if (!order_id) {
       return res.status(400).json({ status: 'error', message: 'Invalid payload' });
     }
-    
+
     // Find order (handle settlement suffixes like -DP-1234 or -LUNAS-1234)
     const baseOrderNumber = order_id.replace(/-(?:DP|LUNAS)(?:-\d+)?$/i, '');
     const isSettlement = /-LUNAS(?:-\d+)?$/i.test(order_id);
 
-const adminDb = getSupabaseAdmin();
-     
+    const adminDb = getSupabaseAdmin();
+
     const { data: order } = await adminDb
       .from('orders')
       .select('*')
       .eq('order_number', baseOrderNumber)
       .single();
-    
+
     if (!order) {
       console.log('Order not found for notification:', order_id, 'base:', baseOrderNumber);
       return res.status(404).json({ status: 'error', message: 'Order not found' });
     }
-    
+
     // Determine new status based on Midtrans status
     let newStatus = order.status;
     let newPaymentStatus = order.payment_status;
     const isPO = order.is_preorder || (order.notes && order.notes.includes('PRE-ORDER'));
-    
+
     switch (transaction_status) {
       case 'capture':
         if (fraud_status === 'challenge') {
@@ -757,7 +757,7 @@ const adminDb = getSupabaseAdmin();
         newStatus = 'processing';
         newPaymentStatus = 'pending';
     }
-    
+
     // Update order
     const updates = {
       status: newStatus,
@@ -766,7 +766,7 @@ const adminDb = getSupabaseAdmin();
       payment_details: notification,
       updated_at: new Date().toISOString()
     };
-    
+
     if (newPaymentStatus === 'paid') {
       updates.paid_at = new Date().toISOString();
     }
@@ -776,14 +776,14 @@ const adminDb = getSupabaseAdmin();
     if (va_numbers?.[0]?.va_number) {
       updates.payment_id = va_numbers[0].va_number;
     }
-    
+
     await adminDb
       .from('orders')
       .update(updates)
       .eq('id', order.id);
-    
+
     console.log(`Order ${order_id} updated: ${transaction_status} -> ${newStatus} / ${newPaymentStatus}`);
-    
+
     res.status(200).json({ status: 'success' });
   } catch (e) {
     console.error('Midtrans Notification error:', e);
@@ -800,7 +800,7 @@ app.get('/login', async (req, res) => {
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const { cartCount } = await getCartData(req);
-  
+
   // Hardcoded admin login - always available
   if (email === 'admin' && password === 'd25tkp2026') {
     req.session.user = { id: 'admin', email: 'admin', username: 'admin', role: 'admin' };
@@ -814,27 +814,27 @@ app.post('/login', async (req, res) => {
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    
+
     if (error) throw error;
-    
+
     if (data.user) {
       const profile = await authService.getProfile(data.user.id);
-      req.session.user = { 
-        id: data.user.id, 
-        email: data.user.email, 
+      req.session.user = {
+        id: data.user.id,
+        email: data.user.email,
         username: profile?.full_name || data.user.email,
         role: profile?.role || 'student'
       };
-      
+
       // Merge guest cart to user cart
       if (req.session.cartSessionId) {
         await cartService.mergeCarts(data.user.id, req.session.cartSessionId);
         delete req.session.cartSessionId;
       }
-      
+
       return res.redirect(req.session.user.role === 'admin' ? '/admin' : '/');
     }
-    
+
     res.render('login', { error: 'Login gagal', cartCount, formatRupiah, currentPage: 'login' });
   } catch (e) {
     console.error('Login error:', e);
@@ -852,15 +852,15 @@ app.get('/register', async (req, res) => {
 app.post('/register', async (req, res) => {
   const { name, email, password, phone, institution } = req.body;
   const { cartCount } = await getCartData(req);
-  
+
   const supabase = getSupabase();
   if (!supabase) {
     return res.render('register', { error: 'Supabase tidak dikonfigurasi', cartCount, formatRupiah, currentPage: 'register' });
   }
 
   try {
-    const { data, error } = await supabase.auth.signUp({ 
-      email, 
+    const { data, error } = await supabase.auth.signUp({
+      email,
       password,
       options: {
         data: {
@@ -870,23 +870,23 @@ app.post('/register', async (req, res) => {
         }
       }
     });
-    
+
     if (error) throw error;
-    
+
     if (data.user) {
       // Profile created automatically by database trigger
       // Get the profile to set role
       const profile = await authService.getProfile(data.user.id);
-      req.session.user = { 
-        id: data.user.id, 
-        email: data.user.email, 
+      req.session.user = {
+        id: data.user.id,
+        email: data.user.email,
         username: name,
         role: profile?.role || 'student'
       };
-      
+
       return res.redirect('/');
     }
-    
+
     res.render('register', { error: 'Registrasi gagal', cartCount, formatRupiah, currentPage: 'register' });
   } catch (e) {
     console.error('Register error:', e);
@@ -911,7 +911,7 @@ app.get('/admin', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.redirect('/login');
   }
-  
+
   try {
     const products = await productService.getAll();
     const stats = await orderService.getStats();
@@ -927,7 +927,7 @@ app.get('/admin/orders', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.redirect('/login');
   }
-  
+
   try {
     const orders = await orderService.getAll({ limit: 50 });
     res.render('admin/orders', { orders, formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user });
@@ -942,7 +942,7 @@ app.post('/admin/orders/:id/status', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).json({ success: false, message: 'Unauthorized' });
   }
-  
+
   try {
     const { status, paymentStatus } = req.body;
     await orderService.updateStatus(req.params.id, status, paymentStatus);
@@ -958,7 +958,7 @@ app.get('/admin/api/orders/:id', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).json({ error: 'Unauthorized' });
   }
-  
+
   try {
     const order = await orderService.getById(req.params.id);
     if (!order) {
@@ -1001,18 +1001,18 @@ app.get('/admin/analytics', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.redirect('/login');
   }
-  
+
   try {
     const stats = await orderService.getStats();
     // Get recent orders for charts
     const adminDb = getSupabaseAdmin();
-    
+
     const { data: recentOrders } = await adminDb
       .from('orders')
       .select('created_at, total, payment_status')
       .order('created_at', { ascending: false })
       .limit(30);
-    
+
     // Group by date for chart
     const ordersByDate = {};
     (recentOrders || []).forEach(o => {
@@ -1021,28 +1021,28 @@ app.get('/admin/analytics', async (req, res) => {
       ordersByDate[date].orders++;
       if (o.payment_status === 'paid') ordersByDate[date].revenue += o.total;
     });
-    
+
     const chartData = Object.entries(ordersByDate).map(([date, data]) => ({
       date, orders: data.orders, revenue: data.revenue
     })).reverse();
-    
-    res.render('admin/analytics', { 
-      stats, 
+
+    res.render('admin/analytics', {
+      stats,
       chartData: JSON.stringify(chartData),
-      formatRupiah, 
-      cartCount: 0, 
-      currentPage: 'admin', 
-      user: req.session.user 
+      formatRupiah,
+      cartCount: 0,
+      currentPage: 'admin',
+      user: req.session.user
     });
   } catch (e) {
     console.error(e);
-    res.render('admin/analytics', { 
-      stats: {}, 
+    res.render('admin/analytics', {
+      stats: {},
       chartData: '[]',
-      formatRupiah, 
-      cartCount: 0, 
-      currentPage: 'admin', 
-      user: req.session.user 
+      formatRupiah,
+      cartCount: 0,
+      currentPage: 'admin',
+      user: req.session.user
     });
   }
 });
@@ -1052,7 +1052,7 @@ app.get('/admin/settings', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.redirect('/login');
   }
-  
+
   try {
     const { settingsService } = require('./lib/db');
     const { getPaymentFees } = require('./lib/paymentConfig');
@@ -1063,17 +1063,17 @@ app.get('/admin/settings', async (req, res) => {
     ]);
     const sizePricing = settings.size_price_config ? (typeof settings.size_price_config === 'string' ? JSON.parse(settings.size_price_config) : settings.size_price_config) : { S: 0, M: 0, L: 0, XL: 0, XXL: 25000, XXXL: 50000 };
     const coupons = rawCoupons ? (typeof rawCoupons === 'string' ? JSON.parse(rawCoupons) : rawCoupons) : {};
-    res.render('admin/settings', { 
+    res.render('admin/settings', {
       settings, paymentFees, sizePricing, coupons,
       query: req.query,
-      formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user 
+      formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user
     });
   } catch (e) {
     console.error(e);
-    res.render('admin/settings', { 
+    res.render('admin/settings', {
       settings: {}, paymentFees: {}, sizePricing: { S: 0, M: 0, L: 0, XL: 0, XXL: 25000, XXXL: 50000 }, coupons: {},
       query: req.query,
-      formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user 
+      formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user
     });
   }
 });
@@ -1083,11 +1083,11 @@ app.post('/admin/settings', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).redirect('/login');
   }
-  
+
   try {
     const { settingsService } = require('./lib/db');
     const { site_name, site_description, contact_email, contact_phone, contact_address } = req.body;
-    
+
     await Promise.all([
       settingsService.set('site_name', site_name, 'Nama situs'),
       settingsService.set('site_description', site_description, 'Deskripsi situs'),
@@ -1095,7 +1095,7 @@ app.post('/admin/settings', async (req, res) => {
       settingsService.set('contact_phone', contact_phone, 'Nomor telepon'),
       settingsService.set('contact_address', contact_address, 'Alamat lengkap')
     ]);
-    
+
     res.redirect('/admin/settings?saved=1');
   } catch (e) {
     console.error(e);
@@ -1107,17 +1107,17 @@ app.post('/admin/settings/payment', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).redirect('/login');
   }
-  
+
   try {
     const { settingsService } = require('./lib/db');
     const { tax_rate, currency, max_cart_quantity } = req.body;
-    
+
     await Promise.all([
       settingsService.set('tax_rate', parseFloat(tax_rate) / 100, 'Persentase pajak'),
       settingsService.set('currency', currency, 'Mata uang'),
       settingsService.set('max_cart_quantity', max_cart_quantity, 'Maksimal quantity per item')
     ]);
-    
+
     res.redirect('/admin/settings?saved=1');
   } catch (e) {
     console.error(e);
@@ -1129,12 +1129,12 @@ app.post('/admin/settings/payment-methods', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).redirect('/login');
   }
-  
+
   try {
     const { settingsService } = require('./lib/db');
-    const methods = Array.isArray(req.body.payment_methods) ? req.body.payment_methods : 
-                   (req.body.payment_methods ? [req.body.payment_methods] : []);
-    
+    const methods = Array.isArray(req.body.payment_methods) ? req.body.payment_methods :
+      (req.body.payment_methods ? [req.body.payment_methods] : []);
+
     await settingsService.set('payment_methods', methods, 'Metode pembayaran yang tersedia');
     res.redirect('/admin/settings?saved=1');
   } catch (e) {
@@ -1171,11 +1171,11 @@ app.post('/admin/settings/email', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).redirect('/login');
   }
-  
+
   try {
     const { settingsService } = require('./lib/db');
     const { email_host, email_port, email_user, email_pass, email_from } = req.body;
-    
+
     await Promise.all([
       settingsService.set('email_host', email_host, 'SMTP Host'),
       settingsService.set('email_port', email_port, 'SMTP Port'),
@@ -1183,7 +1183,7 @@ app.post('/admin/settings/email', async (req, res) => {
       settingsService.set('email_pass', email_pass, 'App password'),
       settingsService.set('email_from', email_from, 'Nama pengirim')
     ]);
-    
+
     res.redirect('/admin/settings?saved=1');
   } catch (e) {
     console.error(e);
@@ -1197,7 +1197,7 @@ app.post('/admin/settings/payment-fees', async (req, res) => {
   try {
     const { settingsService } = require('./lib/db');
     const { defaultPaymentFees } = require('./lib/paymentConfig');
-    
+
     const updatedFees = {};
     for (const key of Object.keys(defaultPaymentFees)) {
       const method = { ...defaultPaymentFees[key] };
@@ -1206,7 +1206,7 @@ app.post('/admin/settings/payment-fees', async (req, res) => {
       method.value = parseFloat(req.body[`fee_value_${key}`]) || 0;
       updatedFees[key] = method;
     }
-    
+
     await settingsService.set('payment_fees', JSON.stringify(updatedFees), 'Biaya layanan per metode pembayaran');
     res.redirect('/admin/settings?saved=1');
   } catch (e) {
@@ -1277,11 +1277,11 @@ app.post('/admin/settings/coupons/add', async (req, res) => {
     if (!code || !type || !value) {
       return res.redirect('/admin/settings?error=Kode, tipe, dan nilai kupon wajib diisi');
     }
-    
+
     // Get existing coupons
     const raw = await settingsService.get('coupons');
     const existing = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : {};
-    
+
     const upperCode = code.toUpperCase().trim();
     existing[upperCode] = {
       type,
@@ -1295,7 +1295,7 @@ app.post('/admin/settings/coupons/add', async (req, res) => {
       description: description || '',
       active: active === '1'
     };
-    
+
     await settingsService.set('coupons', JSON.stringify(existing), 'Daftar kupon diskon');
     res.redirect('/admin/settings?saved=1');
   } catch (e) {
@@ -1314,19 +1314,19 @@ app.get('/lacak-pesanan', async (req, res) => {
       settingsService.getAll().catch(() => ({})),
       getPaymentFees()
     ]);
-    
+
     const poSettings = {
       description: settings.po_description || 'Produk ini merupakan Pre Order. Pembayaran DP dilakukan sekarang, pelunasan setelah produk siap.'
     };
-    
+
     const orderNo = req.query.no?.trim();
     let order = null;
-    
+
     if (orderNo) {
       const orders = await orderService.getAll().catch(() => []);
       order = orders.find(o => o.order_number === orderNo) || null;
     }
-    
+
     res.render('order-tracking', {
       cartCount, formatRupiah, currentPage: 'tracking',
       query: orderNo, order, poSettings,
@@ -1380,6 +1380,9 @@ app.post('/api/orders/:orderNumber/pelunasan', async (req, res) => {
 
     const settlementOrderId = `${order.order_number}-${isDPPaid ? 'LUNAS' : 'DP'}-${Date.now().toString().slice(-4)}`;
 
+    // Use production base URL when available so Midtrans redirects don't point to localhost
+    const baseUrl = process.env.BASE_URL || process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+
     const snapPayload = {
       transaction_details: {
         order_id: settlementOrderId,
@@ -1402,9 +1405,9 @@ app.post('/api/orders/:orderNumber/pelunasan', async (req, res) => {
         }
       ],
       callbacks: {
-        finish: `http://localhost:3000/lacak-pesanan?no=${order.order_number}&status=settled`,
-        error: `http://localhost:3000/lacak-pesanan?no=${order.order_number}&status=failed`,
-        pending: `http://localhost:3000/lacak-pesanan?no=${order.order_number}&status=pending`
+        finish: `${baseUrl}/lacak-pesanan?no=${order.order_number}&status=settled`,
+        error: `${baseUrl}/lacak-pesanan?no=${order.order_number}&status=failed`,
+        pending: `${baseUrl}/lacak-pesanan?no=${order.order_number}&status=pending`
       }
     };
 
@@ -1445,7 +1448,7 @@ app.get('/admin/products', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.redirect('/login');
   }
-  
+
   try {
     const products = await productService.getAll();
     res.render('admin/products', { products, formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user });
@@ -1463,7 +1466,7 @@ app.post('/admin/products', async (req, res) => {
     }
     return res.status(403).redirect('/login');
   }
-  
+
   try {
     const product = await productService.create(req.body);
     if (req.xhr || req.headers.accept?.includes('json') || req.is('json')) {
@@ -1487,7 +1490,7 @@ app.post('/admin/products/:id', async (req, res) => {
     }
     return res.status(403).redirect('/login');
   }
-  
+
   try {
     const product = await productService.update(req.params.id, req.body);
     if (req.xhr || req.headers.accept?.includes('json') || req.is('json')) {
@@ -1511,7 +1514,7 @@ app.post('/admin/products/:id/delete', async (req, res) => {
     }
     return res.status(403).redirect('/login');
   }
-  
+
   try {
     await productService.delete(req.params.id);
     if (req.xhr || req.headers.accept?.includes('json') || req.is('json')) {
@@ -1532,7 +1535,7 @@ app.get('/admin/api/products/:id', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).json({ error: 'Unauthorized' });
   }
-  
+
   try {
     const product = await productService.getById(req.params.id);
     if (!product) {

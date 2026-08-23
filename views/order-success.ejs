@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= order && order.payment_status === 'paid' ? 'Pembayaran Berhasil' : 'Menunggu Pembayaran' %> - D25 Teknologi Pendidikan</title>
+    <title>
+        <%= order && order.payment_status==='paid' ? 'Pembayaran Berhasil' : 'Menunggu Pembayaran' %> - D25 Teknologi
+            Pendidikan
+    </title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Midtrans Snap.js -->
-    <script src="https://app.midtrans.com/snap/snap.js" data-client-key="<%= typeof midtransClientKey !== 'undefined' ? midtransClientKey : 'Mid-client-q_PdjSwlvql9ZW9C' %>"></script>
+    <script src="https://app.midtrans.com/snap/snap.js"
+        data-client-key="<%= typeof midtransClientKey !== 'undefined' ? midtransClientKey : 'Mid-client-q_PdjSwlvql9ZW9C' %>"></script>
     <style>
         .pay-now-banner {
             background: linear-gradient(135deg, #eff6ff, #dbeafe);
@@ -18,6 +23,7 @@
             margin: 20px 0;
             text-align: center;
         }
+
         .btn-pay-now {
             display: inline-flex;
             align-items: center;
@@ -35,284 +41,363 @@
             box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
             transition: all 0.2s ease;
         }
-        .btn-pay-now:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45); }
+
+        .btn-pay-now:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        }
     </style>
 </head>
+
 <body>
     <%- include('partials/header.ejs') %>
 
-    <%
-    const isPaid = order && order.payment_status === 'paid';
-    const isDPPaid = order && order.payment_status === 'dp_paid';
-    const isUnpaid = !isPaid && !isDPPaid;
-    const isPO = order && (order.is_preorder || (order.notes && order.notes.includes('PRE-ORDER')));
-    const paymentFee = Number(order && (order.paymentFee || order.payment_fee || 0) || 0);
-    const baseTotal = Number(order && (order.subtotal || order.total || 0));
-    const dpAmt = order && (order.dp_amount || Math.round(baseTotal * ((order.dp_percentage || 50) / 100)));
-    const remainingAmt = order ? Math.max(baseTotal - Number(dpAmt || 0), 0) : 0;
-    const currentCharge = isPO ? (isDPPaid ? remainingAmt + paymentFee : Number(dpAmt || 0) + paymentFee) : baseTotal + paymentFee;
-    %>
+        <% const isPaid=order && order.payment_status==='paid' ; const isDPPaid=order &&
+            order.payment_status==='dp_paid' ; const isUnpaid=!isPaid && !isDPPaid; const isPO=order &&
+            (order.is_preorder || (order.notes && order.notes.includes('PRE-ORDER'))); const paymentFee=Number(order &&
+            (order.paymentFee || order.payment_fee || 0) || 0); const baseTotal=Number(order && (order.subtotal ||
+            order.total || 0)); const dpAmt=order && (order.dp_amount || Math.round(baseTotal * ((order.dp_percentage ||
+            50) / 100))); const remainingAmt=order ? Math.max(baseTotal - Number(dpAmt || 0), 0) : 0; const
+            currentCharge=isPO ? (isDPPaid ? remainingAmt + paymentFee : Number(dpAmt || 0) + paymentFee) : baseTotal +
+            paymentFee; %>
 
-    <section class="success-page">
-        <div class="container">
-            <div class="success-card">
-                <!-- Status Header -->
-                <% if (isPaid) { %>
-                <div class="success-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                </div>
-                <h1 style="color: #166534;">🎉 Pembayaran Berhasil!</h1>
-                <p>Terima kasih! Pembayaran Anda telah terverifikasi dan pesanan sedang segera diproses.</p>
-                <% } else if (isDPPaid) { %>
-                <div class="success-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                </div>
-                <h1 style="color: #1e40af;">⚡ Pembayaran DP Berhasil!</h1>
-                <p>Uang muka (DP) pesanan Pre-Order Anda telah kami terima. Pesanan kini masuk tahap produksi.</p>
-                <% } else { %>
-                <div class="success-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </div>
-                <h1 style="color: #92400e;">⏳ Menunggu Pembayaran</h1>
-                <p>Pesanan Anda telah dicatat. Silakan selesaikan pembayaran Anda di bawah ini agar pesanan dapat segera diproses.</p>
-                <% } %>
-                
-                <!-- Persistent Payment Action Box (Selama belum lunas) -->
-                <% if (!isPaid) { %>
-                <div class="pay-now-banner">
-                    <div style="font-size: 14px; font-weight: 700; color: #1e3a8a; margin-bottom: 6px;">
-                        <%= isPO ? (isDPPaid ? 'Sisa Tagihan yang Harus Dibayar:' : 'Tagihan DP yang Harus Dibayar:') : 'Total Tagihan yang Harus Dibayar:' %>
-                    </div>
-                    <div style="font-size: 28px; font-weight: 900; color: #dc2626; margin-bottom: 16px;">
-                        <%= formatRupiah(currentCharge) %>
-                    </div>
-                    <% if (paymentFee > 0) { %>
-                    <div style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 12px;">
-                        Termasuk biaya layanan: <%= formatRupiah(paymentFee) %>
-                    </div>
-                    <% } %>
-                    <button type="button" class="btn-pay-now" id="btn-pay-direct" data-order-number="<%= order.order_number %>">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                        <%= isPO ? (isDPPaid ? 'Bayar Sisa Tagihan Sekarang' : 'Bayar DP Sekarang') : 'Bayar Tagihan Sekarang' %>
-                    </button>
-                    <div style="font-size: 12px; color: #64748b; margin-top: 10px;">
-                        🔒 Pembayaran aman otomatis via Midtrans Snap (QRIS, VA BCA/BNI/BRI/Mandiri, GoPay)
-                    </div>
-                </div>
-                <% } %>
-
-                <div class="order-details-card">
-                    <h3>Detail Pesanan</h3>
-                    <div class="order-detail-row" style="align-items: center;">
-                        <span class="order-detail-label">Nomor Pesanan</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="order-detail-value" id="order-number-text" style="font-family: monospace; font-size: 15px; font-weight: 800; color: var(--unm-blue);"><%= order.order_number || '-' %></span>
-                            <button type="button" id="btn-copy" data-order-number="<%= order.order_number %>" style="padding: 4px 10px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                                📋 Salin
-                            </button>
-                        </div>
-                    </div>
-                    <div class="order-detail-row">
-                        <span class="order-detail-label">Tanggal</span>
-                        <span class="order-detail-value"><%= new Date(order.created_at || new Date()).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
-                    </div>
-                    <div class="order-detail-row">
-                        <span class="order-detail-label">Nama</span>
-                        <span class="order-detail-value"><%= order.customer_name || '-' %></span>
-                    </div>
-                    <div class="order-detail-row">
-                        <span class="order-detail-label">Email</span>
-                        <span class="order-detail-value"><%= order.customer_email || '-' %></span>
-                    </div>
-                    <div class="order-detail-row">
-                        <span class="order-detail-label">Telepon</span>
-                        <span class="order-detail-value"><%= order.customer_phone || '-' %></span>
-                    </div>
-                    <div class="order-detail-row">
-                        <span class="order-detail-label">Status Pembayaran</span>
-                        <span class="order-detail-value">
-                            <% if (isPaid) { %>
-                                <span style="color: #16a34a; font-weight: 700;">✅ Lunas (100%)</span>
+            <section class="success-page">
+                <div class="container">
+                    <div class="success-card">
+                        <!-- Status Header -->
+                        <% if (isPaid) { %>
+                            <div class="success-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                            </div>
+                            <h1 style="color: #166534;">🎉 Pembayaran Berhasil!</h1>
+                            <p>Terima kasih! Pembayaran Anda telah terverifikasi dan pesanan sedang segera diproses.</p>
                             <% } else if (isDPPaid) { %>
-                                <span style="color: #2563eb; font-weight: 700;">⚡ DP Diterima</span>
-                            <% } else { %>
-                                <span style="color: #ea580c; font-weight: 700;">⏳ Belum Dibayar (Menunggu Pembayaran)</span>
-                            <% } %>
-                        </span>
-                    </div>
-                    <div class="order-detail-row total">
-                        <span class="order-detail-label">Total Pesanan</span>
-                        <span class="order-detail-value"><%= formatRupiah(order.total) %></span>
+                                <div class="success-icon"
+                                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                </div>
+                                <h1 style="color: #1e40af;">⚡ Pembayaran DP Berhasil!</h1>
+                                <p>Uang muka (DP) pesanan Pre-Order Anda telah kami terima. Pesanan kini masuk tahap
+                                    produksi.</p>
+                                <% } else { %>
+                                    <div class="success-icon"
+                                        style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                    </div>
+                                    <h1 style="color: #92400e;">⏳ Menunggu Pembayaran</h1>
+                                    <p>Pesanan Anda telah dicatat. Silakan selesaikan pembayaran Anda di bawah ini agar
+                                        pesanan dapat segera diproses.</p>
+                                    <% } %>
+
+                                        <!-- Persistent Payment Action Box (Selama belum lunas) -->
+                                        <% if (!isPaid) { %>
+                                            <div class="pay-now-banner">
+                                                <div
+                                                    style="font-size: 14px; font-weight: 700; color: #1e3a8a; margin-bottom: 6px;">
+                                                    <%= isPO ? (isDPPaid ? 'Sisa Tagihan yang Harus Dibayar:'
+                                                        : 'Tagihan DP yang Harus Dibayar:' )
+                                                        : 'Total Tagihan yang Harus Dibayar:' %>
+                                                </div>
+                                                <div
+                                                    style="font-size: 28px; font-weight: 900; color: #dc2626; margin-bottom: 16px;">
+                                                    <%= formatRupiah(currentCharge) %>
+                                                </div>
+                                                <% if (paymentFee> 0) { %>
+                                                    <div
+                                                        style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 12px;">
+                                                        Termasuk biaya layanan: <%= formatRupiah(paymentFee) %>
+                                                    </div>
+                                                    <% } %>
+                                                        <button type="button" class="btn-pay-now" id="btn-pay-direct"
+                                                            data-order-number="<%= order.order_number %>">
+                                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2.5">
+                                                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2">
+                                                                </rect>
+                                                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                                                            </svg>
+                                                            <%= isPO ? (isDPPaid ? 'Bayar Sisa Tagihan Sekarang'
+                                                                : 'Bayar DP Sekarang' ) : 'Bayar Tagihan Sekarang' %>
+                                                        </button>
+                                                        <div style="font-size: 12px; color: #64748b; margin-top: 10px;">
+                                                            🔒 Pembayaran aman otomatis via Midtrans Snap (QRIS, VA
+                                                            BCA/BNI/BRI/Mandiri, GoPay)
+                                                        </div>
+                                            </div>
+                                            <% } %>
+
+                                                <div class="order-details-card">
+                                                    <h3>Detail Pesanan</h3>
+                                                    <div class="order-detail-row" style="align-items: center;">
+                                                        <span class="order-detail-label">Nomor Pesanan</span>
+                                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                                            <span class="order-detail-value" id="order-number-text"
+                                                                style="font-family: monospace; font-size: 15px; font-weight: 800; color: var(--unm-blue);">
+                                                                <%= order.order_number || '-' %>
+                                                            </span>
+                                                            <button type="button" id="btn-copy"
+                                                                data-order-number="<%= order.order_number %>"
+                                                                style="padding: 4px 10px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                                                📋 Salin
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="order-detail-row">
+                                                        <span class="order-detail-label">Tanggal</span>
+                                                        <span class="order-detail-value">
+                                                            <%= new Date(order.created_at || new
+                                                                Date()).toLocaleDateString('id-ID', { weekday: 'long' ,
+                                                                year: 'numeric' , month: 'long' , day: 'numeric' }) %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="order-detail-row">
+                                                        <span class="order-detail-label">Nama</span>
+                                                        <span class="order-detail-value">
+                                                            <%= order.customer_name || '-' %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="order-detail-row">
+                                                        <span class="order-detail-label">Email</span>
+                                                        <span class="order-detail-value">
+                                                            <%= order.customer_email || '-' %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="order-detail-row">
+                                                        <span class="order-detail-label">Telepon</span>
+                                                        <span class="order-detail-value">
+                                                            <%= order.customer_phone || '-' %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="order-detail-row">
+                                                        <span class="order-detail-label">Status Pembayaran</span>
+                                                        <span class="order-detail-value">
+                                                            <% if (isPaid) { %>
+                                                                <span style="color: #16a34a; font-weight: 700;">✅ Lunas
+                                                                    (100%)</span>
+                                                                <% } else if (isDPPaid) { %>
+                                                                    <span style="color: #2563eb; font-weight: 700;">⚡ DP
+                                                                        Diterima</span>
+                                                                    <% } else { %>
+                                                                        <span
+                                                                            style="color: #ea580c; font-weight: 700;">⏳
+                                                                            Belum Dibayar (Menunggu Pembayaran)</span>
+                                                                        <% } %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="order-detail-row total">
+                                                        <span class="order-detail-label">Total Pesanan</span>
+                                                        <span class="order-detail-value">
+                                                            <%= formatRupiah(order.total) %>
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Action Save / Share Section -->
+                                                <div
+                                                    style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; text-align: left;">
+                                                    <div
+                                                        style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 10px;">
+                                                        💾 Simpan & Catat Nomor Pesanan Anda:</div>
+                                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                        <% if (order.customer_phone) { const
+                                                            cleanPhone=order.customer_phone.replace(/\D/g, ''
+                                                            ).replace(/^0/, '62' ); const
+                                                            waText=encodeURIComponent(`*BUKTI PESANAN D25 TEKNOLOGI
+                                                            PENDIDIKAN*\n\nNomor Pesanan: ${order.order_number}\nNama:
+                                                            ${order.customer_name}\nTotal:
+                                                            ${formatRupiah(order.total)}\nStatus Pembayaran: ${isPaid
+                                                            ? 'Lunas' : (isDPPaid ? 'DP Diterima' : 'Belum Dibayar'
+                                                            )}\n\nLacak status & bayar tagihan
+                                                            di:\nhttp://localhost:3000/lacak-pesanan?no=${order.order_number}`);
+                                                            %>
+                                                            <a href="https://wa.me/<%= cleanPhone %>?text=<%= waText %>"
+                                                                target="_blank" id="wa-save-link"
+                                                                style="flex: 1; min-width: 140px; padding: 8px 12px; background: #25D366; color: white; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                                💬 Simpan ke WhatsApp
+                                                            </a>
+                                                            <% } %>
+                                                                <button type="button" id="btn-print-order"
+                                                                    style="flex: 1; min-width: 130px; padding: 8px 12px; background: white; color: #334155; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                                    🖨️ Cetak / PDF
+                                                                </button>
+                                                    </div>
+                                                </div>
+
+                                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                                    <a href="/lacak-pesanan?no=<%= order.order_number || '' %>"
+                                                        class="btn btn-primary"
+                                                        style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                                        🔍 Lacak Status & Detail Pesanan
+                                                    </a>
+                                                    <a href="/" class="btn btn-secondary back-home-btn"
+                                                        style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2"
+                                                            stroke-linecap="round" stroke-linejoin="round">
+                                                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                                                            <polyline points="12 19 5 12 12 5"></polyline>
+                                                        </svg>
+                                                        Kembali ke Beranda
+                                                    </a>
+                                                </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- Action Save / Share Section -->
-                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; text-align: left;">
-                    <div style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 10px;">💾 Simpan & Catat Nomor Pesanan Anda:</div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <% if (order.customer_phone) { 
-                            const cleanPhone = order.customer_phone.replace(/\D/g, '').replace(/^0/, '62');
-                            const waText = encodeURIComponent(`*BUKTI PESANAN D25 TEKNOLOGI PENDIDIKAN*\n\nNomor Pesanan: ${order.order_number}\nNama: ${order.customer_name}\nTotal: ${formatRupiah(order.total)}\nStatus Pembayaran: ${isPaid ? 'Lunas' : (isDPPaid ? 'DP Diterima' : 'Belum Dibayar')}\n\nLacak status & bayar tagihan di:\nhttp://localhost:3000/lacak-pesanan?no=${order.order_number}`);
-                        %>
-                        <a href="https://wa.me/<%= cleanPhone %>?text=<%= waText %>" target="_blank" style="flex: 1; min-width: 140px; padding: 8px 12px; background: #25D366; color: white; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                            💬 Simpan ke WhatsApp
-                        </a>
-                        <% } %>
-                        <button type="button" id="btn-print-order" style="flex: 1; min-width: 130px; padding: 8px 12px; background: white; color: #334155; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                            🖨️ Cetak / PDF
-                        </button>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <a href="/lacak-pesanan?no=<%= order.order_number || '' %>" class="btn btn-primary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        🔍 Lacak Status & Detail Pesanan
-                    </a>
-                    <a href="/" class="btn btn-secondary back-home-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                        Kembali ke Beranda
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
+            <script>
+                // Auto-save order to browser localStorage so customer never loses it
+                const currentOrder = {
+                    number: '<%= order.order_number %>',
+                    date: '<%= new Date(order.created_at || new Date()).toISOString() %>',
+                    total: <%= order.total || 0 %>,
+                    status: '<%= order.status || "pending" %>',
+                    payment_status: '<%= order.payment_status || "unpaid" %>'
+                };
 
-    <script>
-        // Auto-save order to browser localStorage so customer never loses it
-        const currentOrder = {
-            number: '<%= order.order_number %>',
-            date: '<%= new Date(order.created_at || new Date()).toISOString() %>',
-            total: <%= order.total || 0 %>,
-            status: '<%= order.status || "pending" %>',
-            payment_status: '<%= order.payment_status || "unpaid" %>'
-        };
+                if (currentOrder.number && currentOrder.number !== '-') {
+                    try {
+                        let saved = JSON.parse(localStorage.getItem('d25_recent_orders') || '[]');
+                        saved = saved.filter(o => o.number !== currentOrder.number);
+                        saved.unshift(currentOrder);
+                        if (saved.length > 5) saved = saved.slice(0, 5);
+                        localStorage.setItem('d25_recent_orders', JSON.stringify(saved));
+                    } catch (e) {
+                        console.error('Could not save to localStorage', e);
+                    }
+                }
 
-        if (currentOrder.number && currentOrder.number !== '-') {
-            try {
-                let saved = JSON.parse(localStorage.getItem('d25_recent_orders') || '[]');
-                saved = saved.filter(o => o.number !== currentOrder.number);
-                saved.unshift(currentOrder);
-                if (saved.length > 5) saved = saved.slice(0, 5);
-                localStorage.setItem('d25_recent_orders', JSON.stringify(saved));
-            } catch (e) {
-                console.error('Could not save to localStorage', e);
-            }
-        }
+                function copyOrderNumber(num) {
+                    if (!num) return;
+                    navigator.clipboard.writeText(num).then(() => {
+                        const btn = document.getElementById('btn-copy');
+                        if (!btn) return;
+                        btn.textContent = '✅ Tersalin!';
+                        btn.style.background = '#dcfce7';
+                        btn.style.color = '#166534';
+                        setTimeout(() => {
+                            btn.textContent = '📋 Salin';
+                            btn.style.background = '#e0f2fe';
+                            btn.style.color = '#0369a1';
+                        }, 2500);
+                    }).catch(() => {
+                        alert('Nomor pesanan: ' + num);
+                    });
+                }
 
-        function copyOrderNumber(num) {
-            if (!num) return;
-            navigator.clipboard.writeText(num).then(() => {
-                const btn = document.getElementById('btn-copy');
-                if (!btn) return;
-                btn.textContent = '✅ Tersalin!';
-                btn.style.background = '#dcfce7';
-                btn.style.color = '#166534';
-                setTimeout(() => {
-                    btn.textContent = '📋 Salin';
-                    btn.style.background = '#e0f2fe';
-                    btn.style.color = '#0369a1';
-                }, 2500);
-            }).catch(() => {
-                alert('Nomor pesanan: ' + num);
-            });
-        }
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Fix hardcoded localhost URL in WhatsApp share link for production
+                    const waLink = document.getElementById('wa-save-link');
+                    if (waLink && waLink.href.indexOf('http://localhost:3000') !== -1) {
+                        waLink.href = waLink.href.replace('http://localhost:3000', window.location.origin);
+                    }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const directPayBtn = document.getElementById('btn-pay-direct');
-            if (directPayBtn) {
-                directPayBtn.addEventListener('click', function() {
-                    triggerDirectPay(directPayBtn.dataset.orderNumber || '');
+                    const directPayBtn = document.getElementById('btn-pay-direct');
+                    if (directPayBtn) {
+                        directPayBtn.addEventListener('click', function () {
+                            triggerDirectPay(directPayBtn.dataset.orderNumber || '');
+                        });
+                    }
+
+                    const copyBtn = document.getElementById('btn-copy');
+                    if (copyBtn) {
+                        copyBtn.addEventListener('click', function () {
+                            copyOrderNumber(copyBtn.dataset.orderNumber || '');
+                        });
+                    }
+
+                    const printBtn = document.getElementById('btn-print-order');
+                    if (printBtn) {
+                        printBtn.addEventListener('click', function () {
+                            window.print();
+                        });
+                    }
                 });
-            }
 
-            const copyBtn = document.getElementById('btn-copy');
-            if (copyBtn) {
-                copyBtn.addEventListener('click', function() {
-                    copyOrderNumber(copyBtn.dataset.orderNumber || '');
-                });
-            }
+                // Direct pay trigger if payment was pending/unpaid
+                async function triggerDirectPay(orderNumber) {
+                    const btn = document.getElementById('btn-pay-direct');
+                    if (!btn) return;
+                    btn.disabled = true;
+                    btn.textContent = 'Memuat Pembayaran...';
 
-            const printBtn = document.getElementById('btn-print-order');
-            if (printBtn) {
-                printBtn.addEventListener('click', function() {
-                    window.print();
-                });
-            }
-        });
+                    try {
+                        const isDPPaid = <%= isDPPaid ? 'true' : 'false' %>;
+                        const endpoint = isDPPaid
+                            ? `/api/orders/${orderNumber}/pelunasan`
+                            : `/api/orders/${orderNumber}/pelunasan`;
+                        const methodKey = '<%= order.payment_method || "bank_bca" %>';
 
-        // Direct pay trigger if payment was pending/unpaid
-        async function triggerDirectPay(orderNumber) {
-            const btn = document.getElementById('btn-pay-direct');
-            if (!btn) return;
-            btn.disabled = true;
-            btn.textContent = 'Memuat Pembayaran...';
-
-            try {
-                const isDPPaid = <%= isDPPaid ? 'true' : 'false' %>;
-                const endpoint = isDPPaid 
-                    ? `/api/orders/${orderNumber}/pelunasan`
-                    : `/api/orders/${orderNumber}/pelunasan`;
-                const methodKey = '<%= order.payment_method || "bank_bca" %>';
-
-                sessionStorage.setItem('d25_last_settlement', JSON.stringify({
-                    orderNumber,
-                    methodKey,
-                    amount: <%= Number(currentCharge) %>,
-                    createdAt: Date.now()
+                        sessionStorage.setItem('d25_last_settlement', JSON.stringify({
+                            orderNumber,
+                            methodKey,
+                            amount: <%= Number(currentCharge) %>,
+                            createdAt: Date.now()
                 }));
 
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payment_method: methodKey })
-                });
-
-                const result = await res.json();
-                if (!result.success) throw new Error(result.message || 'Gagal memuat pembayaran');
-
-                if (result.snapToken && typeof window.snap !== 'undefined') {
-                    window.snap.pay(result.snapToken, {
-                        onSuccess: function() {
-                            sessionStorage.removeItem('d25_last_settlement');
-                            alert('🎉 Pembayaran berhasil!');
-                            window.location.href = `/lacak-pesanan?no=${orderNumber}`;
-                        },
-                        onPending: function() {
-                            sessionStorage.removeItem('d25_last_settlement');
-                            alert('Menunggu pembayaran diselesaikan.');
-                            window.location.href = `/lacak-pesanan?no=${orderNumber}&status=pending`;
-                        },
-                        onError: function() {
-                            sessionStorage.removeItem('d25_last_settlement');
-                            alert('Pembayaran gagal atau dibatalkan.');
-                            btn.disabled = false;
-                            btn.textContent = 'Bayar Sekarang';
-                        },
-                        onClose: function() {
-                            sessionStorage.setItem('d25_last_settlement', JSON.stringify({
-                                orderNumber,
-                                methodKey,
-                                amount: <%= Number(currentCharge) %>,
-                                createdAt: Date.now()
-                            }));
-                            btn.disabled = false;
-                            btn.textContent = 'Bayar Sekarang';
-                            window.location.href = `/lacak-pesanan?no=${orderNumber}`;
-                        }
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ payment_method: methodKey })
                     });
+
+                    const result = await res.json();
+                    if (!result.success) throw new Error(result.message || 'Gagal memuat pembayaran');
+
+                    if (result.snapToken && typeof window.snap !== 'undefined') {
+                        window.snap.pay(result.snapToken, {
+                            onSuccess: function () {
+                                sessionStorage.removeItem('d25_last_settlement');
+                                alert('🎉 Pembayaran berhasil!');
+                                window.location.href = `/lacak-pesanan?no=${orderNumber}`;
+                            },
+                            onPending: function () {
+                                sessionStorage.removeItem('d25_last_settlement');
+                                alert('Menunggu pembayaran diselesaikan.');
+                                window.location.href = `/lacak-pesanan?no=${orderNumber}&status=pending`;
+                            },
+                            onError: function () {
+                                sessionStorage.removeItem('d25_last_settlement');
+                                alert('Pembayaran gagal atau dibatalkan.');
+                                btn.disabled = false;
+                                btn.textContent = 'Bayar Sekarang';
+                            },
+                            onClose: function () {
+                                sessionStorage.setItem('d25_last_settlement', JSON.stringify({
+                                    orderNumber,
+                                    methodKey,
+                                    amount: <%= Number(currentCharge) %>,
+                                    createdAt: Date.now()
+                            }));
+                        btn.disabled = false;
+                        btn.textContent = 'Bayar Sekarang';
+                        window.location.href = `/lacak-pesanan?no=${orderNumber}`;
+                    }
+                });
                 } else if (result.redirectUrl) {
                     sessionStorage.removeItem('d25_last_settlement');
                     window.location.href = result.redirectUrl;
                 }
             } catch (e) {
-                sessionStorage.removeItem('d25_last_settlement');
-                alert('Error: ' + e.message);
-                btn.disabled = false;
-                btn.textContent = 'Bayar Sekarang';
-            }
+                    sessionStorage.removeItem('d25_last_settlement');
+                    alert('Error: ' + e.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Bayar Sekarang';
+                }
         }
-    </script>
+            </script>
 
-    <%- include('partials/footer.ejs') %>
+            <%- include('partials/footer.ejs') %>
 </body>
+
 </html>
