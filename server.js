@@ -365,7 +365,7 @@ app.post('/remove-from-cart/:id', async (req, res) => {
 // =====================================================
 // COUPON / DISCOUNT SYSTEM
 // =====================================================
-const COUPONS = {
+const DEFAULT_COUPONS = {
   'DISKON10': { type: 'percent', value: 10, minOrder: 0, maxDiscount: 50000, description: 'Diskon 10%', active: true },
   'DISKON20': { type: 'percent', value: 20, minOrder: 100000, maxDiscount: 100000, description: 'Diskon 20% (min. belanja Rp100rb)', active: true },
   'HEMAT50K': { type: 'flat', value: 50000, minOrder: 200000, maxDiscount: 50000, description: 'Potongan Rp50.000 (min. belanja Rp200rb)', active: true },
@@ -373,9 +373,23 @@ const COUPONS = {
   'D25PROMO': { type: 'percent', value: 15, minOrder: 50000, maxDiscount: 75000, description: 'Diskon 15% spesial D25 (min. belanja Rp50rb)', active: true },
 };
 
-function calculateDiscount(couponCode, subtotal) {
+async function getCouponsFromDB() {
+  try {
+    const { settingsService } = require('./lib/db');
+    const raw = await settingsService.get('coupons');
+    if (raw) {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return { ...DEFAULT_COUPONS, ...parsed };
+    }
+  } catch (e) {
+    // fallback to defaults
+  }
+  return { ...DEFAULT_COUPONS };
+}
+
+function calculateDiscount(couponCode, subtotal, coupons) {
   const code = (couponCode || '').toUpperCase().trim();
-  const coupon = COUPONS[code];
+  const coupon = (coupons || {})[code];
   if (!coupon || !coupon.active) return { valid: false, message: 'Kode kupon tidak valid atau sudah tidak berlaku.' };
   if (subtotal < coupon.minOrder) return { valid: false, message: `Minimal belanja ${formatRupiah(coupon.minOrder)} untuk menggunakan kupon ini.` };
 
@@ -394,7 +408,8 @@ function calculateDiscount(couponCode, subtotal) {
 app.post('/api/validate-coupon', async (req, res) => {
   try {
     const { code, subtotal } = req.body;
-    const result = calculateDiscount(code, Number(subtotal) || 0);
+    const coupons = await getCouponsFromDB();
+    const result = calculateDiscount(code, Number(subtotal) || 0, coupons);
     res.json(result);
   } catch (e) {
     res.status(500).json({ valid: false, message: 'Gagal memvalidasi kupon.' });
@@ -421,9 +436,6 @@ app.get('/checkout', async (req, res) => {
     const activePaymentFees = Object.fromEntries(
       Object.entries(paymentFees).filter(([, m]) => m.active !== false)
     );
-
-    console.log('[DEBUG] paymentFees from DB:', JSON.stringify(paymentFees, null, 2));
-    console.log('[DEBUG] activePaymentFees:', JSON.stringify(activePaymentFees, null, 2));
 
     const poEnabled = settings.po_enabled === '1' || settings.po_enabled === true || settings.po_enabled === 'true';
     
@@ -503,7 +515,8 @@ app.post('/checkout', async (req, res) => {
     let discountAmount = 0;
     let appliedCoupon = null;
     if (coupon_code) {
-      const couponResult = calculateDiscount(coupon_code, subtotal);
+      const coupons = await getCouponsFromDB();
+      const couponResult = calculateDiscount(coupon_code, subtotal, coupons);
       if (couponResult.valid) {
         discountAmount = couponResult.discount;
         appliedCoupon = couponResult.code;
@@ -1000,20 +1013,22 @@ app.get('/admin/settings', async (req, res) => {
   try {
     const { settingsService } = require('./lib/db');
     const { getPaymentFees } = require('./lib/paymentConfig');
-    const [settings, paymentFees] = await Promise.all([
+    const [settings, paymentFees, rawCoupons] = await Promise.all([
       settingsService.getAll(),
-      getPaymentFees()
+      getPaymentFees(),
+      settingsService.get('coupons').catch(() => null)
     ]);
     const sizePricing = settings.size_price_config ? (typeof settings.size_price_config === 'string' ? JSON.parse(settings.size_price_config) : settings.size_price_config) : { S: 0, M: 0, L: 0, XL: 0, XXL: 25000, XXXL: 50000 };
+    const coupons = rawCoupons ? (typeof rawCoupons === 'string' ? JSON.parse(rawCoupons) : rawCoupons) : {};
     res.render('admin/settings', { 
-      settings, paymentFees, sizePricing,
+      settings, paymentFees, sizePricing, coupons,
       query: req.query,
       formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user 
     });
   } catch (e) {
     console.error(e);
     res.render('admin/settings', { 
-      settings: {}, paymentFees: {}, sizePricing: { S: 0, M: 0, L: 0, XL: 0, XXL: 25000, XXXL: 50000 },
+      settings: {}, paymentFees: {}, sizePricing: { S: 0, M: 0, L: 0, XL: 0, XXL: 25000, XXXL: 50000 }, coupons: {},
       query: req.query,
       formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user 
     });
@@ -1173,6 +1188,66 @@ app.post('/admin/settings/preorder', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.redirect('/admin/settings?error=Gagal menyimpan pengaturan PO');
+  }
+});
+
+// Coupon settings - Save existing coupons
+app.post('/admin/settings/coupons', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).redirect('/login');
+  try {
+    const { settingsService } = require('./lib/db');
+    const coupons = {};
+    for (const key of Object.keys(req.body)) {
+      if (key.startsWith('coupon_code_')) {
+        const codeKey = key.replace('coupon_code_', '');
+        const code = req.body[key];
+        coupons[code] = {
+          type: req.body[`coupon_type_${codeKey}`] || 'percent',
+          value: parseFloat(req.body[`coupon_value_${codeKey}`]) || 0,
+          minOrder: parseFloat(req.body[`coupon_min_${codeKey}`]) || 0,
+          maxDiscount: parseFloat(req.body[`coupon_max_${codeKey}`]) || 0,
+          description: req.body[`coupon_desc_${codeKey}`] || '',
+          active: req.body[`coupon_active_${codeKey}`] === '1'
+        };
+      }
+    }
+    await settingsService.set('coupons', JSON.stringify(coupons), 'Daftar kupon diskon');
+    res.redirect('/admin/settings?saved=1');
+  } catch (e) {
+    console.error(e);
+    res.redirect('/admin/settings?error=Gagal menyimpan kupon');
+  }
+});
+
+// Coupon settings - Add new coupon
+app.post('/admin/settings/coupons/add', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).redirect('/login');
+  try {
+    const { settingsService } = require('./lib/db');
+    const { code, type, value, minOrder, maxDiscount, description, active } = req.body;
+    if (!code || !type || !value) {
+      return res.redirect('/admin/settings?error=Kode, tipe, dan nilai kupon wajib diisi');
+    }
+    
+    // Get existing coupons
+    const raw = await settingsService.get('coupons');
+    const existing = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : {};
+    
+    const upperCode = code.toUpperCase().trim();
+    existing[upperCode] = {
+      type,
+      value: parseFloat(value),
+      minOrder: parseFloat(minOrder) || 0,
+      maxDiscount: parseFloat(maxDiscount) || 0,
+      description: description || '',
+      active: active === '1'
+    };
+    
+    await settingsService.set('coupons', JSON.stringify(existing), 'Daftar kupon diskon');
+    res.redirect('/admin/settings?saved=1');
+  } catch (e) {
+    console.error(e);
+    res.redirect('/admin/settings?error=Gagal menambah kupon: ' + e.message);
   }
 });
 

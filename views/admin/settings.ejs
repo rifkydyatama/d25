@@ -208,6 +208,116 @@
                 </form>
             </section>
 
+            <!-- COUPON / DISCOUNT SETTINGS -->
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <h2>Manajemen Kupon & Diskon</h2>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Atur kode kupon yang bisa digunakan pembeli saat checkout. Diskon otomatis terpotong dari subtotal.</p>
+                </div>
+                <form action="/admin/settings/coupons" method="POST" class="checkout-form-card">
+                    <div style="overflow-x:auto;">
+                    <table class="fee-table">
+                        <thead>
+                            <tr>
+                                <th>Aktif</th>
+                                <th>Kode Kupon</th>
+                                <th>Tipe Diskon</th>
+                                <th>Nilai</th>
+                                <th>Min. Belanja</th>
+                                <th>Max Diskon</th>
+                                <th>Deskripsi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <% if (coupons && Object.keys(coupons).length > 0) { %>
+                            <% Object.keys(coupons).forEach(key => { const c = coupons[key]; %>
+                            <tr>
+                                <td>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" name="coupon_active_<%= key %>" value="1" <%= c.active !== false ? 'checked' : '' %>>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <input type="text" name="coupon_code_<%= key %>" value="<%= key %>" class="form-control" style="width:120px;text-transform:uppercase;font-weight:600;" readonly>
+                                </td>
+                                <td>
+                                    <select name="coupon_type_<%= key %>">
+                                        <option value="percent" <%= c.type === 'percent' ? 'selected' : '' %>>Persentase (%)</option>
+                                        <option value="flat" <%= c.type === 'flat' ? 'selected' : '' %>>Flat (Rp)</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="coupon_value_<%= key %>" value="<%= c.value %>" step="0.01" min="0" class="form-control" style="width:100px;">
+                                </td>
+                                <td>
+                                    <input type="number" name="coupon_min_<%= key %>" value="<%= c.minOrder || 0 %>" step="1000" min="0" class="form-control" style="width:120px;">
+                                </td>
+                                <td>
+                                    <input type="number" name="coupon_max_<%= key %>" value="<%= c.maxDiscount || 0 %>" step="1000" min="0" class="form-control" style="width:120px;" placeholder="0 = tidak ada batas">
+                                </td>
+                                <td>
+                                    <input type="text" name="coupon_desc_<%= key %>" value="<%= c.description || '' %>" class="form-control" placeholder="Deskripsi diskon">
+                                </td>
+                            </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:20px;">Belum ada kupon. Tambah kupon baru di bawah.</td></tr>
+                        <% } %>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <button type="submit" class="btn btn-primary">💾 Simpan Kupon</button>
+                        <span style="font-size:12px;color:var(--text-secondary);margin-left:12px;">Perubahan langsung berlaku di halaman checkout.</span>
+                    </div>
+                </form>
+                
+                <!-- Add New Coupon -->
+                <form action="/admin/settings/coupons/add" method="POST" class="checkout-form-card" style="margin-top:20px;">
+                    <h4 style="margin:0 0 12px;font-size:14px;color:var(--unm-navy);">➕ Tambah Kupon Baru</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="new_coupon_code">Kode Kupon <span class="required">*</span></label>
+                            <input type="text" id="new_coupon_code" name="code" required class="form-control" placeholder="Contoh: DISKON10" style="text-transform:uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_coupon_type">Tipe Diskon <span class="required">*</span></label>
+                            <select id="new_coupon_type" name="type" required class="form-control">
+                                <option value="percent">Persentase (%)</option>
+                                <option value="flat">Flat (Rp)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="new_coupon_value">Nilai <span class="required">*</span></label>
+                            <input type="number" id="new_coupon_value" name="value" required step="0.01" min="0" class="form-control" placeholder="10 (untuk 10%) atau 50000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="new_coupon_min">Min. Belanja</label>
+                            <input type="number" id="new_coupon_min" name="minOrder" step="1000" min="0" class="form-control" value="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_coupon_max">Max Diskon</label>
+                            <input type="number" id="new_coupon_max" name="maxDiscount" step="1000" min="0" class="form-control" value="0" placeholder="0 = tidak ada batas">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_coupon_active">Status</label>
+                            <select id="new_coupon_active" name="active" class="form-control">
+                                <option value="1">Aktif</option>
+                                <option value="0">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_coupon_desc">Deskripsi</label>
+                        <input type="text" id="new_coupon_desc" name="description" class="form-control" placeholder="Contoh: Diskon 10% untuk member baru">
+                    </div>
+                    <button type="submit" class="btn btn-primary">➕ Tambah Kupon</button>
+                </form>
+            </section>
+
             <!-- EMAIL SETTINGS -->
             <section class="admin-section">
                 <div class="admin-section-header"><h2>Konfigurasi Email (Opsional)</h2></div>
