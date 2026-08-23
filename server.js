@@ -102,6 +102,7 @@ app.use(session({
 app.use((req, res, next) => {
   res.locals.supabaseUrl = supabaseUrl;
   res.locals.supabaseAnonKey = supabaseAnonKey;
+  res.locals.baseUrl = process.env.BASE_URL || process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
   next();
 });
 
