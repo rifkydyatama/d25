@@ -14,7 +14,7 @@
    - Import your GitHub repository
    - Framework Preset: **Other**
    - Build Command: `npm run vercel-build`
-   - Output Directory: `public` (or leave empty)
+   - Output Directory: `.` (root)
 
 3. **Add Environment Variables**
    In Vercel Dashboard > Settings > Environment Variables, add:
