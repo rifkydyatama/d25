@@ -89,6 +89,32 @@
                 align-items: start;
             }
 
+            /* Desktop: form kiri, ringkasan kanan (meski ringkasan duluan di DOM) */
+            .checkout-container>.summary-first {
+                grid-column: 2;
+                grid-row: 1;
+            }
+
+            .checkout-container>div:not(.summary-first) {
+                grid-column: 1;
+                grid-row: 1;
+            }
+
+            /* Mobile: ringkasan tampil pertama (urutan DOM), form di bawahnya */
+            @media (max-width: 768px) {
+                .checkout-container {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .checkout-container>.summary-first,
+                .checkout-container>div:not(.summary-first) {
+                    grid-column: auto;
+                    grid-row: auto;
+                    width: 100%;
+                }
+            }
+
             /* Glass card */
             .glass-card {
                 background: rgba(255, 255, 255, 0.85);
@@ -761,6 +787,117 @@
             </div>
 
             <div class="checkout-container">
+                <!-- Ringkasan Pesanan (ditaruh paling atas sebelum Informasi Pemesan) -->
+                <aside class="summary-first">
+                    <div class="glass-card summary-card">
+                        <h2>
+                            <div class="icon-circle">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                </svg>
+                            </div>
+                            Ringkasan Pesanan
+                        </h2>
+
+                        <div class="summary-items">
+                            <% cart.forEach(item=> { %>
+                                <div class="summary-item">
+                                    <img src="<%= item.image || item.imageUrl || '/images/placeholder-product.svg' %>"
+                                        alt="<%= item.name %>" class="summary-item-img"
+                                        onerror="this.src='/images/placeholder-product.svg'">
+                                    <div class="summary-item-info">
+                                        <div class="summary-item-name">
+                                            <%= item.name %>
+                                        </div>
+                                        <% if (item.size) { %>
+                                            <div class="summary-item-size">Ukuran: <%= item.size %>
+                                            </div>
+                                            <% if (item.sizePrice> 0) { %>
+                                                <div class="summary-item-size" style="color: #dc2626;">+ <%=
+                                                        formatRupiah(item.sizePrice) %> ukuran</div>
+                                                <% } %>
+                                                    <% } %>
+                                                        <div class="summary-item-qty">Qty: <%= item.quantity %>
+                                                        </div>
+                                    </div>
+                                    <div class="summary-item-price">
+                                        <%= formatRupiah(item.price * item.quantity) %>
+                                    </div>
+                                </div>
+                                <% }) %>
+                        </div>
+
+                        <div class="summary-divider"></div>
+
+                        <div class="summary-row">
+                            <span>Subtotal (<%= cart.reduce((s, i)=> s + i.quantity, 0) %> item)</span>
+                            <span>
+                                <%= formatRupiah(subtotal) %>
+                            </span>
+                        </div>
+
+                        <!-- Coupon Section -->
+                        <div class="coupon-section" id="coupon-section">
+                            <h4>🏷️ Punya Kode Kupon?</h4>
+                            <div class="coupon-input-row" id="coupon-input-row">
+                                <input type="text" id="coupon-input" placeholder="Masukkan kode kupon" maxlength="20">
+                                <button type="button" id="btn-apply-coupon">Pakai</button>
+                            </div>
+                            <div class="coupon-msg" id="coupon-msg" style="display: none;"></div>
+                            <div class="coupon-applied" id="coupon-applied" style="display: none;">
+                                <div class="coupon-applied-info">
+                                    <span class="coupon-applied-code" id="coupon-applied-code"></span>
+                                    <span class="coupon-applied-desc" id="coupon-applied-desc"></span>
+                                </div>
+                                <button type="button" class="coupon-remove">✕ Hapus</button>
+                            </div>
+                        </div>
+
+                        <div class="summary-row" id="discount-row" style="display: none; color: #16a34a;">
+                            <span>🏷️ Diskon Kupon</span>
+                            <span id="discount-amount" style="font-weight: 700;">- Rp 0</span>
+                        </div>
+
+                        <div class="summary-row po-dp" id="po-dp-row" style="display: none;">
+                            <span>Uang Muka (DP <span id="po-dp-pct">
+                                    <%= poSettings.dpPercentage || 50 %>
+                                </span>%)</span>
+                            <span id="po-dp-amount">Rp 0</span>
+                        </div>
+
+                        <div class="summary-row" id="fee-row" style="display: none;">
+                            <span>Biaya Layanan</span>
+                            <span id="fee-amount">Rp 0</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Ongkos Kirim</span>
+                            <span style="color: #16a34a; font-weight: 600;">Gratis</span>
+                        </div>
+
+                        <div class="summary-row total">
+                            <span id="total-label">Total Bayar</span>
+                            <span id="total-val">
+                                <%= formatRupiah(total) %>
+                            </span>
+                        </div>
+
+                        <div class="summary-row po-remaining" id="po-remaining-row" style="display: none;">
+                            <span>⏳ Sisa Pelunasan Nanti</span>
+                            <span id="po-remaining-amount">Rp 0</span>
+                        </div>
+
+                        <div class="secure-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            Transaksi dijamin aman & terenkripsi Midtrans
+                        </div>
+                    </div>
+                </aside>
+
                 <!-- Left: Form -->
                 <div>
                     <% if (typeof error !=='undefined' && error) { %>
@@ -942,124 +1079,13 @@
                                                 </span>
                                             </button>
 
-                                            <p class="terms-text">
-                                                Dengan melanjutkan, Anda menyetujui <a href="#">Syarat & Ketentuan</a>
-                                                dan <a href="#">Kebijakan Privasi</a> D25 Teknologi Pendidikan.
-                                            </p>
-                                </form>
-                            </div>
+                                                <p class="terms-text">
+                                                    Dengan melanjutkan, Anda menyetujui <a href="#">Syarat & Ketentuan</a>
+                                                    dan <a href="#">Kebijakan Privasi</a> D25 Teknologi Pendidikan.
+                                                </p>
+                                    </form>
+                                </div>
                 </div>
-
-                <!-- Right: Summary -->
-                <aside>
-                    <div class="glass-card summary-card">
-                        <h2>
-                            <div class="icon-circle">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                                </svg>
-                            </div>
-                            Ringkasan Pesanan
-                        </h2>
-
-                        <div class="summary-items">
-                            <% cart.forEach(item=> { %>
-                                <div class="summary-item">
-                                    <img src="<%= item.image || item.imageUrl || '/images/placeholder-product.svg' %>"
-                                        alt="<%= item.name %>" class="summary-item-img"
-                                        onerror="this.src='/images/placeholder-product.svg'">
-                                    <div class="summary-item-info">
-                                        <div class="summary-item-name">
-                                            <%= item.name %>
-                                        </div>
-                                        <% if (item.size) { %>
-                                            <div class="summary-item-size">Ukuran: <%= item.size %>
-                                            </div>
-                                            <% if (item.sizePrice> 0) { %>
-                                                <div class="summary-item-size" style="color: #dc2626;">+ <%=
-                                                        formatRupiah(item.sizePrice) %> ukuran</div>
-                                                <% } %>
-                                                    <% } %>
-                                                        <div class="summary-item-qty">Qty: <%= item.quantity %>
-                                                        </div>
-                                    </div>
-                                    <div class="summary-item-price">
-                                        <%= formatRupiah(item.price * item.quantity) %>
-                                    </div>
-                                </div>
-                                <% }) %>
-                        </div>
-
-                        <div class="summary-divider"></div>
-
-                        <div class="summary-row">
-                            <span>Subtotal (<%= cart.reduce((s, i)=> s + i.quantity, 0) %> item)</span>
-                            <span>
-                                <%= formatRupiah(subtotal) %>
-                            </span>
-                        </div>
-
-                        <!-- Coupon Section -->
-                        <div class="coupon-section" id="coupon-section">
-                            <h4>🏷️ Punya Kode Kupon?</h4>
-                            <div class="coupon-input-row" id="coupon-input-row">
-                                <input type="text" id="coupon-input" placeholder="Masukkan kode kupon" maxlength="20">
-                                <button type="button" id="btn-apply-coupon" onclick="applyCoupon()">Pakai</button>
-                            </div>
-                            <div class="coupon-msg" id="coupon-msg" style="display: none;"></div>
-                            <div class="coupon-applied" id="coupon-applied" style="display: none;">
-                                <div class="coupon-applied-info">
-                                    <span class="coupon-applied-code" id="coupon-applied-code"></span>
-                                    <span class="coupon-applied-desc" id="coupon-applied-desc"></span>
-                                </div>
-                                <button type="button" class="coupon-remove" onclick="removeCoupon()">✕ Hapus</button>
-                            </div>
-                        </div>
-
-                        <div class="summary-row" id="discount-row" style="display: none; color: #16a34a;">
-                            <span>🏷️ Diskon Kupon</span>
-                            <span id="discount-amount" style="font-weight: 700;">- Rp 0</span>
-                        </div>
-
-                        <div class="summary-row po-dp" id="po-dp-row" style="display: none;">
-                            <span>Uang Muka (DP <span id="po-dp-pct">
-                                    <%= poSettings.dpPercentage || 50 %>
-                                </span>%)</span>
-                            <span id="po-dp-amount">Rp 0</span>
-                        </div>
-
-                        <div class="summary-row" id="fee-row" style="display: none;">
-                            <span>Biaya Layanan</span>
-                            <span id="fee-amount">Rp 0</span>
-                        </div>
-
-                        <div class="summary-row">
-                            <span>Ongkos Kirim</span>
-                            <span style="color: #16a34a; font-weight: 600;">Gratis</span>
-                        </div>
-
-                        <div class="summary-row total">
-                            <span id="total-label">Total Bayar</span>
-                            <span id="total-val">
-                                <%= formatRupiah(total) %>
-                            </span>
-                        </div>
-
-                        <div class="summary-row po-remaining" id="po-remaining-row" style="display: none;">
-                            <span>⏳ Sisa Pelunasan Nanti</span>
-                            <span id="po-remaining-amount">Rp 0</span>
-                        </div>
-
-                        <div class="secure-badge">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                            Transaksi dijamin aman & terenkripsi Midtrans
-                        </div>
-                    </div>
-                </aside>
             </div>
         </div>
 
@@ -1185,8 +1211,7 @@
                 updateFee();
 
                 // Coupon handling
-                async function applyCoupon() {
-                    const input = document.getElementById('coupon-input');
+                async function applyCoupon() {                    const input = document.getElementById('coupon-input');
                     const code = input.value.trim().toUpperCase();
                     const msgEl = document.getElementById('coupon-msg');
                     const btn = document.getElementById('btn-apply-coupon');
@@ -1252,6 +1277,18 @@
                     msgEl.className = 'coupon-msg ' + type;
                     msgEl.style.display = 'block';
                 }
+
+                // Wire coupon buttons via addEventListener (CSP-safe, tanpa inline onclick)
+                document.getElementById('btn-apply-coupon').addEventListener('click', applyCoupon);
+                document.querySelector('.coupon-remove').addEventListener('click', removeCoupon);
+
+                // Enter di input kupon juga menerapkan kupon
+                document.getElementById('coupon-input').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applyCoupon();
+                    }
+                });
 
                 checkoutForm.addEventListener('submit', async function (e) {
                     e.preventDefault();

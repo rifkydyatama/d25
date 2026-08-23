@@ -37,6 +37,9 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://app.midtrans.com", "https://api.midtrans.com"],
+      // Izinkan inline event handler (onclick dll) yang dipakai UI,
+      // contoh: tombol kupon checkout onclick="applyCoupon()"
+      scriptSrcAttr: ["'unsafe-inline'"],
       connectSrc: ["'self'", "https://api.midtrans.com", "https://app.midtrans.com", "https://*.supabase.co"],
       frameSrc: ["'self'", "https://app.midtrans.com"],
       objectSrc: ["'none'"],

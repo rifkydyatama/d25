@@ -70,6 +70,9 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://cdn.jsdelivr.net"
       ],
+      // Izinkan inline event handler (onclick dll) yang dipakai UI,
+      // contoh: tombol kupon checkout onclick="applyCoupon()"
+      scriptSrcAttr: ["'unsafe-inline'"],
       connectSrc: ["'self'", "https://app.midtrans.com", "https://api.midtrans.com", "https://*.supabase.co"],
       frameSrc: ["'self'", "https://app.midtrans.com", "https://app.sandbox.midtrans.com"],
       objectSrc: ["'none'"],
