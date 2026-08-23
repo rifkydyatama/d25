@@ -543,6 +543,131 @@
             font-weight: 500;
         }
 
+        /* Coupon Section */
+        .coupon-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: linear-gradient(135deg, #fffbeb, #fef9e7);
+            border: 1.5px dashed #f59e0b;
+            border-radius: 12px;
+        }
+
+        .coupon-section h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .coupon-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .coupon-input-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .coupon-input-row input:focus {
+            outline: none;
+            border-color: var(--unm-blue);
+        }
+
+        .coupon-input-row button {
+            padding: 10px 18px;
+            background: var(--unm-navy);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .coupon-input-row button:hover {
+            background: var(--unm-blue);
+        }
+
+        .coupon-input-row button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .coupon-msg {
+            font-size: 12px;
+            margin-top: 8px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .coupon-msg.success {
+            color: #16a34a;
+        }
+
+        .coupon-msg.error {
+            color: #dc2626;
+        }
+
+        .coupon-applied {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0fdf4;
+            border: 1.5px solid #86efac;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-top: 8px;
+        }
+
+        .coupon-applied-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .coupon-applied-code {
+            font-size: 13px;
+            font-weight: 800;
+            color: #166534;
+            text-transform: uppercase;
+        }
+
+        .coupon-applied-desc {
+            font-size: 11px;
+            color: #15803d;
+        }
+
+        .coupon-remove {
+            background: none;
+            border: none;
+            color: #dc2626;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+
+        .coupon-remove:hover {
+            background: #fee2e2;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .checkout-container {
@@ -771,6 +896,28 @@
                         <span>Subtotal (<%= cart.reduce((s, i) => s + i.quantity, 0) %> item)</span>
                         <span><%= formatRupiah(subtotal) %></span>
                     </div>
+
+                    <!-- Coupon Section -->
+                    <div class="coupon-section" id="coupon-section">
+                        <h4>🏷️ Punya Kode Kupon?</h4>
+                        <div class="coupon-input-row" id="coupon-input-row">
+                            <input type="text" id="coupon-input" placeholder="Masukkan kode kupon" maxlength="20">
+                            <button type="button" id="btn-apply-coupon" onclick="applyCoupon()">Pakai</button>
+                        </div>
+                        <div class="coupon-msg" id="coupon-msg" style="display: none;"></div>
+                        <div class="coupon-applied" id="coupon-applied" style="display: none;">
+                            <div class="coupon-applied-info">
+                                <span class="coupon-applied-code" id="coupon-applied-code"></span>
+                                <span class="coupon-applied-desc" id="coupon-applied-desc"></span>
+                            </div>
+                            <button type="button" class="coupon-remove" onclick="removeCoupon()">✕ Hapus</button>
+                        </div>
+                    </div>
+
+                    <div class="summary-row" id="discount-row" style="display: none; color: #16a34a;">
+                        <span>🏷️ Diskon Kupon</span>
+                        <span id="discount-amount" style="font-weight: 700;">- Rp 0</span>
+                    </div>
                     
                     <div class="summary-row po-dp" id="po-dp-row" style="display: none;">
                         <span>Uang Muka (DP <span id="po-dp-pct"><%= poSettings.dpPercentage || 50 %></span>%)</span>
@@ -842,14 +989,17 @@
                 }
             });
 
-            // Base calculation
-            let chargeBase = subtotal;
+            // Base calculation (apply discount first)
+            let effectiveSubtotal = subtotal - appliedDiscountAmount;
+            if (effectiveSubtotal < 0) effectiveSubtotal = 0;
+            
+            let chargeBase = effectiveSubtotal;
             let dpAmount = 0;
             let remainingAmount = 0;
 
             if (isPO) {
-                dpAmount = Math.round(subtotal * (poDpPercentage / 100));
-                remainingAmount = subtotal - dpAmount;
+                dpAmount = Math.round(effectiveSubtotal * (poDpPercentage / 100));
+                remainingAmount = effectiveSubtotal - dpAmount;
                 chargeBase = dpAmount; // Fee is calculated on DP or charged with DP
 
                 if (poDpRow) {
@@ -918,6 +1068,78 @@
         // Initial calculation
         updateFee();
 
+        // Coupon handling
+        let appliedCouponCode = null;
+        let appliedDiscountAmount = 0;
+
+        async function applyCoupon() {
+            const input = document.getElementById('coupon-input');
+            const code = input.value.trim().toUpperCase();
+            const msgEl = document.getElementById('coupon-msg');
+            const btn = document.getElementById('btn-apply-coupon');
+            
+            if (!code) {
+                showCouponMsg('Masukkan kode kupon terlebih dahulu.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Memeriksa...';
+            msgEl.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/validate-coupon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, subtotal })
+                });
+                const result = await response.json();
+
+                if (result.valid) {
+                    appliedCouponCode = result.code;
+                    appliedDiscountAmount = result.discount;
+                    
+                    document.getElementById('coupon-input-row').style.display = 'none';
+                    document.getElementById('coupon-applied-code').textContent = result.code;
+                    document.getElementById('coupon-applied-desc').textContent = result.description;
+                    document.getElementById('coupon-applied').style.display = 'flex';
+                    
+                    document.getElementById('discount-row').style.display = 'flex';
+                    document.getElementById('discount-amount').textContent = '-' + formatIDR(result.discount);
+                    
+                    showCouponMsg('Kupon berhasil diterapkan! ' + result.description, 'success');
+                    updateFee();
+                } else {
+                    showCouponMsg(result.message, 'error');
+                }
+            } catch (e) {
+                showCouponMsg('Gagal memvalidasi kupon. Coba lagi.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Pakai';
+            }
+        }
+
+        function removeCoupon() {
+            appliedCouponCode = null;
+            appliedDiscountAmount = 0;
+            
+            document.getElementById('coupon-input').value = '';
+            document.getElementById('coupon-input-row').style.display = 'flex';
+            document.getElementById('coupon-applied').style.display = 'none';
+            document.getElementById('discount-row').style.display = 'none';
+            document.getElementById('coupon-msg').style.display = 'none';
+            
+            updateFee();
+        }
+
+        function showCouponMsg(message, type) {
+            const msgEl = document.getElementById('coupon-msg');
+            msgEl.textContent = message;
+            msgEl.className = 'coupon-msg ' + type;
+            msgEl.style.display = 'block';
+        }
+
         checkoutForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -929,6 +1151,15 @@
             if (!name || !email || !phone || !address) {
                 alert('Mohon lengkapi semua field yang wajib diisi.');
                 return;
+            }
+
+            // Add coupon code to form data
+            if (appliedCouponCode) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'coupon_code';
+                hiddenInput.value = appliedCouponCode;
+                checkoutForm.appendChild(hiddenInput);
             }
 
             btnPay.disabled = true;

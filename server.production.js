@@ -191,6 +191,46 @@ async function getCartData(req) {
 }
 
 // =====================================================
+// COUPON / DISCOUNT SYSTEM
+// =====================================================
+const COUPONS = {
+  'DISKON10': { type: 'percent', value: 10, minOrder: 0, maxDiscount: 50000, description: 'Diskon 10%', active: true },
+  'DISKON20': { type: 'percent', value: 20, minOrder: 100000, maxDiscount: 100000, description: 'Diskon 20% (min. belanja Rp100rb)', active: true },
+  'HEMAT50K': { type: 'flat', value: 50000, minOrder: 200000, maxDiscount: 50000, description: 'Potongan Rp50.000 (min. belanja Rp200rb)', active: true },
+  'HEMAT25K': { type: 'flat', value: 25000, minOrder: 100000, maxDiscount: 25000, description: 'Potongan Rp25.000 (min. belanja Rp100rb)', active: true },
+  'D25PROMO': { type: 'percent', value: 15, minOrder: 50000, maxDiscount: 75000, description: 'Diskon 15% spesial D25 (min. belanja Rp50rb)', active: true },
+};
+
+function calculateDiscount(couponCode, subtotal) {
+  const code = (couponCode || '').toUpperCase().trim();
+  const coupon = COUPONS[code];
+  if (!coupon || !coupon.active) return { valid: false, message: 'Kode kupon tidak valid atau sudah tidak berlaku.' };
+  if (subtotal < coupon.minOrder) return { valid: false, message: `Minimal belanja ${formatRupiah(coupon.minOrder)} untuk menggunakan kupon ini.` };
+
+  let discount = 0;
+  if (coupon.type === 'percent') {
+    discount = Math.round(subtotal * (coupon.value / 100));
+    if (coupon.maxDiscount && discount > coupon.maxDiscount) discount = coupon.maxDiscount;
+  } else {
+    discount = coupon.value;
+  }
+
+  return { valid: true, discount, description: coupon.description, code };
+}
+
+// Coupon validation API
+app.post('/api/validate-coupon', async (req, res) => {
+  try {
+    const { code, subtotal } = req.body;
+    const result = calculateDiscount(code, Number(subtotal) || 0);
+    res.json(result);
+  } catch (e) {
+    logger.error('Coupon validation error', { error: e.message });
+    res.status(500).json({ valid: false, message: 'Gagal memvalidasi kupon.' });
+  }
+});
+
+// =====================================================
 // GLOBALS FOR VIEWS
 // =====================================================
 // Test route - BEFORE globals middleware
@@ -448,7 +488,7 @@ const { getPaymentFees, calculatePaymentFee } = require('./lib/paymentConfig');
 // Process checkout
 app.post('/checkout', async (req, res) => {
   try {
-    const { name, email, phone, address, institution, notes, payment_method, is_preorder } = req.body;
+    const { name, email, phone, address, institution, notes, payment_method, is_preorder, coupon_code } = req.body;
     
     if (!name || !email || !phone || !address || !payment_method) {
       if (req.accepts('json') || req.xhr) {
@@ -494,22 +534,42 @@ app.post('/checkout', async (req, res) => {
       dpPercentage = parseInt(s.po_dp_percentage) || 50;
     }
 
-    const dpAmount = isPreorder ? Math.round(subtotal * (dpPercentage / 100)) : subtotal;
+    // Apply coupon discount
+    let discountAmount = 0;
+    let appliedCoupon = null;
+    if (coupon_code) {
+      const couponResult = calculateDiscount(coupon_code, subtotal);
+      if (couponResult.valid) {
+        discountAmount = couponResult.discount;
+        appliedCoupon = couponResult.code;
+      }
+    }
+
+    const effectiveSubtotal = subtotal - discountAmount;
+    const dpAmount = isPreorder ? Math.round(effectiveSubtotal * (dpPercentage / 100)) : effectiveSubtotal;
     const paymentFee = calculatePaymentFee(paymentMethodConfig, dpAmount);
+
+    // Append coupon info to notes
+    let couponNotes = notes || '';
+    if (appliedCoupon && discountAmount > 0) {
+      couponNotes = `[KUPON: ${appliedCoupon} - Diskon ${formatRupiah(discountAmount)}] ${couponNotes}`.trim();
+    }
 
     const order = await orderService.createFromCart(cartId, {
       userId: req.session.user?.id,
       name, email, phone, address, institution,
       paymentMethod: payment_method,
-      notes, paymentFee, paymentMethodConfig,
-      isPreorder, dpPercentage
+      notes: couponNotes, paymentFee, paymentMethodConfig,
+      isPreorder, dpPercentage,
+      discountAmount
     });
 
     order.is_preorder = isPreorder;
-    order.dp_amount = isPreorder ? Math.round(subtotal * (dpPercentage / 100)) : null;
+    order.dp_amount = isPreorder ? Math.round(effectiveSubtotal * (dpPercentage / 100)) : null;
     order.dp_percentage = isPreorder ? dpPercentage : null;
     order.paymentFee = paymentFee;
     order.paymentMethodConfig = paymentMethodConfig;
+    order.discountAmount = discountAmount;
 
     req.session.lastOrder = order;
 
