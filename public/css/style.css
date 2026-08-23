@@ -288,9 +288,17 @@ nav a.active::after {
         display: none;
     }
     
-    header nav > ul {
-        display: none;
-    }
+header nav > ul {
+         display: flex;
+         flex-wrap: wrap;
+         gap: 8px;
+     }
+     header nav > ul li:not(.cart-link) {
+         display: none;
+     }
+     header nav > ul li.cart-link {
+         display: flex;
+     }
     
     /* Mobile Navigation Drawer */
     .mobile-nav-drawer {
