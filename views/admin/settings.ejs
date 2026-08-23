@@ -183,13 +183,13 @@
                 <form action="/admin/settings/preorder" method="POST" class="checkout-form-card">
                     <div class="form-row">
                         <div class="form-group">
-                            <label style="display:flex;align-items:center;gap:10px;font-weight:600;">
+                            <div style="display:flex;align-items:center;gap:10px;font-weight:600;">
                                 <label class="toggle-switch">
                                     <input type="checkbox" id="po_enabled" name="po_enabled" value="1" <%= (settings.po_enabled?.toString() === '1' || settings.po_enabled === true || settings.po_enabled === 'true') ? 'checked' : '' %>>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                Aktifkan Mode Pre Order
-                            </label>
+                                <span>Aktifkan Mode Pre Order</span>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="po_dp_percentage">Persentase DP / Uang Muka (%)</label>
