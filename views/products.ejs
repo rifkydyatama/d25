@@ -42,7 +42,7 @@
                             <span class="product-brand"><%= product.brand %></span>
                         <% } %>
                         <h3><%= product.name %></h3>
-                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 12px; flex-grow: 1;"><%= product.description %></p>
+                        <p class="product-card-description"><%= product.description %></p>
                         <div class="product-meta">
                             <% if (product.brand) { %>
                             <div class="product-meta-item">
@@ -87,7 +87,7 @@
                             <span class="price-original"><%= formatRupiah(product.originalPrice) %></span>
                             <% } %>
                         </div>
-                        <a href="/product/<%= product.id %>" class="btn btn-outline" style="width: 100%; margin-top: 16px;">Lihat Detail</a>
+                        <a href="/product/<%= product.id %>" class="btn btn-outline btn-product-detail">Lihat Detail</a>
                     </div>
                 </article>
                 <% }) %>

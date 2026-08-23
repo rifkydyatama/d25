@@ -68,9 +68,17 @@
         /* Info Card */
         .product-info-card {
             background: #fff;
-            padding: 20px 16px 100px;
-            /* space for sticky bar */
+            padding: 20px 16px 40px;
+            /* extra space handled by main padding-bottom on mobile */
             position: relative;
+        }
+
+        /* Prevent horizontal overflow of long text */
+        .product-info-card,
+        .product-title,
+        .description-text {
+            overflow-wrap: break-word;
+            word-wrap: break-word;
         }
 
         /* Category/Brand badges */
@@ -463,7 +471,7 @@
             align-items: center;
             gap: 12px;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
-            z-index: 10000;
+            z-index: 500;
             transform: translateY(100%);
             animation: slideUp 0.3s ease forwards;
         }
@@ -559,6 +567,34 @@
                 min-width: 78px;
                 padding: 12px 16px;
             }
+
+            /* Desktop Add to Cart button - inline in content */
+            .desktop-add-to-cart {
+                display: flex !important;
+                align-items: center;
+                gap: 12px;
+                margin-top: 24px;
+                padding-top: 20px;
+                border-top: 1px solid var(--border-color);
+            }
+
+            .desktop-add-to-cart .qty-selector {
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+                flex: 1;
+            }
+
+            .desktop-add-to-cart .btn-add-to-cart {
+                flex: 0 0 280px;
+                min-width: 280px;
+                height: 56px;
+                font-size: 16px;
+                font-weight: 700;
+                border-radius: 14px;
+                padding: 0 24px;
+                box-shadow: var(--shadow-glow);
+            }
         }
 
         /* Safe area for bottom bar */
@@ -566,9 +602,17 @@
             .sticky-cart-bar {
                 padding-bottom: 12px;
             }
+        }
 
-            .product-info-card {
-                padding-bottom: calc(160px + env(safe-area-inset-bottom));
+        /* Mobile: beri ruang untuk sticky bar + bottom nav agar tidak menutupi konten */
+        @media (max-width: 768px) {
+            .product-section {
+                padding-bottom: calc(var(--bottom-nav-height, 70px) + var(--safe-area-bottom, 0px) + 80px);
+            }
+
+            /* Desktop add-to-cart disembunyikan di mobile */
+            .desktop-add-to-cart {
+                display: none !important;
             }
         }
     </style>
@@ -817,6 +861,27 @@
                         </div>
                     </div>
 
+                    <!-- Desktop Add to Cart (hanya tampil di desktop) -->
+                    <div class="desktop-add-to-cart">
+                        <form action="/add-to-cart/<%= product.id %>" method="POST" style="flex: 0 0 auto; display: flex;">
+                            <% if (showSizeSelector) { %>
+                            <input type="hidden" name="size" class="desktop-selected-size" value="M">
+                            <input type="hidden" name="size_price" class="desktop-selected-size-price" value="0">
+                            <% } %>
+                            <input type="hidden" name="quantity" class="desktop-quantity-hidden" value="1">
+                            <button type="submit" class="btn btn-primary btn-add-to-cart"
+                                <%= product.stock === 0 ? ' disabled' : '' %>>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+                                <%= product.isDigital ? 'Beli Sekarang' : 'Tambah ke Keranjang' %>
+                            </button>
+                        </form>
+                    </div>
+
                     <!-- Features -->
                     <% if (!product.isDigital && (product.specifications || product.warrantyMonths || product.tags)) {
                         %>
@@ -906,6 +971,9 @@
                                                         const stickyBar = document.getElementById('stickyCartBar');
                                                         const stickyPrice = document.getElementById('stickyPrice');
                                                         const mainPrice = document.querySelector('.price-current');
+                                                        const desktopQtyHidden = document.querySelector('.desktop-quantity-hidden');
+                                                        const desktopSizeInput = document.querySelector('.desktop-selected-size');
+                                                        const desktopSizePriceInput = document.querySelector('.desktop-selected-size-price');
 
                                                         // Price per unit (base + size)
                                                         let basePrice = <%= product.price %>;
@@ -915,6 +983,7 @@
                                                             val = Math.max(1, Math.min(maxQty, val));
                                                             qtyInput.value = val;
                                                             qtyHidden.value = val;
+                                                            if (desktopQtyHidden) desktopQtyHidden.value = val;
                                                             updateStickyPrice();
                                                         }
 
@@ -934,6 +1003,8 @@
                                                                     sizeChips.forEach(c => c.classList.toggle('selected', c === chip));
                                                                     selectedSizeInput.value = chip.dataset.size;
                                                                     selectedSizePriceInput.value = chip.dataset.sizePrice || '0';
+                                                                    if (desktopSizeInput) desktopSizeInput.value = chip.dataset.size;
+                                                                    if (desktopSizePriceInput) desktopSizePriceInput.value = chip.dataset.sizePrice || '0';
                                                                     sizePrice = parseInt(chip.dataset.sizePrice) || 0;
                                                                     updateStickyPrice();
                                                                 });
