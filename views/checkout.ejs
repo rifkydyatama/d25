@@ -690,6 +690,7 @@
                 .checkout-container {
                     grid-template-columns: 1fr;
                     padding: 16px;
+                    padding-bottom: calc(var(--bottom-nav-height, 70px) + var(--safe-area-bottom, 0px) + 24px);
                 }
 
                 .field-grid {
@@ -698,6 +699,13 @@
 
                 .glass-card {
                     padding: 24px 20px;
+                }
+
+                /* Summary card di bawah form (bukan overlay yang menutupi konten) */
+                .summary-card {
+                    position: static;
+                    max-height: none;
+                    overflow-y: visible;
                 }
 
                 .checkout-steps {
