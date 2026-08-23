@@ -13,6 +13,16 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Custom fetch with timeout
+const fetchWithTimeout = (url, options = {}) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  return fetch(url, {
+    ...options,
+    signal: controller.signal
+  }).finally(() => clearTimeout(timeoutId));
+};
+
 // Lazy Supabase clients
 let _supabase = null;
 let _supabaseAdmin = null;
@@ -20,7 +30,9 @@ let _supabaseAdmin = null;
 function getSupabase() {
   if (!_supabase && supabaseUrl && supabaseAnonKey) {
     const { createClient } = require('@supabase/supabase-js');
-    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+    _supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { fetch: fetchWithTimeout }
+    });
   }
   return _supabase;
 }
@@ -29,7 +41,8 @@ function getSupabaseAdmin() {
   if (!_supabaseAdmin && supabaseUrl && supabaseServiceKey) {
     const { createClient } = require('@supabase/supabase-js');
     _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { fetch: fetchWithTimeout }
     });
   }
   return _supabaseAdmin || getSupabase();
@@ -158,7 +171,10 @@ async function getCartData(req) {
 
 app.get('/api/health', async (req, res) => {
   try {
-    const { data, error } = await getSupabaseAdmin().from('products').select('id').limit(1);
+    const { data, error } = await timeoutPromise(
+      getSupabaseAdmin().from('products').select('id').limit(1),
+      8000
+    );
     if (error) throw error;
     return res.json({
       status: 'healthy',

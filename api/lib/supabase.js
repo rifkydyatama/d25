@@ -2,6 +2,16 @@
 let _supabase = null;
 let _supabaseAdmin = null;
 
+// Custom fetch with timeout
+const fetchWithTimeout = (url, options = {}) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  return fetch(url, {
+    ...options,
+    signal: controller.signal
+  }).finally(() => clearTimeout(timeoutId));
+};
+
 function getSupabase() {
   if (!_supabase) {
     require('dotenv').config();
@@ -15,11 +25,14 @@ function getSupabase() {
       console.warn('   Please configure SUPABASE_URL and SUPABASE_ANON_KEY');
     }
 
-    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+    _supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { fetch: fetchWithTimeout }
+    });
 
     if (supabaseServiceKey) {
       _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: { autoRefreshToken: false, persistSession: false }
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { fetch: fetchWithTimeout }
       });
     } else {
       _supabaseAdmin = _supabase;
@@ -30,7 +43,7 @@ function getSupabase() {
 
 function getSupabaseAdmin() {
   if (!_supabaseAdmin) {
-    getSupabase();
+    getSupabase(); // ensures both are initialized
   }
   return _supabaseAdmin;
 }
