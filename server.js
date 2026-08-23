@@ -432,12 +432,16 @@ app.get('/checkout', async (req, res) => {
       settingsService.getAll().catch(() => ({}))
     ]);
 
+    console.log('[DEBUG CHECKOUT] settings:', JSON.stringify(settings, null, 2));
+    console.log('[DEBUG CHECKOUT] po_enabled raw:', settings.po_enabled, 'type:', typeof settings.po_enabled);
+
     // Filter to only active methods
     const activePaymentFees = Object.fromEntries(
       Object.entries(paymentFees).filter(([, m]) => m.active !== false)
     );
 
     const poEnabled = settings.po_enabled === '1' || settings.po_enabled === true || settings.po_enabled === 'true';
+    console.log('[DEBUG CHECKOUT] poEnabled:', poEnabled);
     
     res.render('checkout', { 
       cart, subtotal, tax: 0, total: subtotal, cartCount, formatRupiah,
@@ -1178,6 +1182,8 @@ app.post('/admin/settings/preorder', async (req, res) => {
   try {
     const { settingsService } = require('./lib/db');
     const { po_enabled, po_dp_percentage, po_deadline_days, po_description } = req.body;
+    console.log('[DEBUG PREORDER SAVE] req.body:', req.body);
+    console.log('[DEBUG PREORDER SAVE] po_enabled:', po_enabled, 'type:', typeof po_enabled);
     await Promise.all([
       settingsService.set('po_enabled', po_enabled === '1' ? '1' : '0', 'Mode Pre Order aktif'),
       settingsService.set('po_dp_percentage', po_dp_percentage || '50', 'Persentase DP Pre Order'),
