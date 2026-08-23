@@ -975,8 +975,10 @@
         const poDpPercentage = <%= (typeof poSettings !== 'undefined' && poSettings.dpPercentage) ? Number(poSettings.dpPercentage) : 50 %>;
 
         function updateFee() {
+            console.log('[updateFee] called');
             const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
             const poRadio = document.querySelector('input[name="is_preorder"]:checked');
+            console.log('[updateFee] poRadio:', poRadio, 'isPO:', poRadio ? poRadio.value : 'none');
             const isPO = poRadio ? (poRadio.value === '1') : false;
 
             // Highlight active PO card
