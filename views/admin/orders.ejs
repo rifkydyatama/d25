@@ -252,7 +252,7 @@
                     if (!result.success) throw new Error(result.message || 'Gagal update');
                     this.defaultValue = value;
                 } catch (e) {
-                    alert('Gagal memperbarui status: ' + e.message);
+                    showToast('Gagal memperbarui status: ' + e.message, 'error');
                     this.value = this.defaultValue || originalValue;
                 } finally {
                     this.disabled = false;
@@ -389,7 +389,7 @@
                         setTimeout(() => row.remove(), 300);
                     }
                 } catch (err) {
-                    alert('Gagal menghapus pesanan: ' + err.message);
+                    showToast('Gagal menghapus pesanan: ' + err.message, 'error');
                     this.disabled = false;
                 }
             });

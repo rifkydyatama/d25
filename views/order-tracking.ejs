@@ -1,164 +1,896 @@
-<!DOCTYPE html><html lang="id"> <head>     <meta charset="UTF-8">     <meta name="viewport" content="width=device-width, initial-scale=1.0">     <title>Lacak Pesanan - D25 Teknologi Pendidikan</title>     <link rel="stylesheet" href="/css/style.css">     <link rel="preconnect" href="https://fonts.googleapis.com">     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">     <!-- Midtrans Snap Script -->     <script src="<%= (typeof midtransIsProduction !== 'undefined' && midtransIsProduction) ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' %>" data-client-key="<%= typeof midtransClientKey !== 'undefined' ? midtransClientKey : '' %>"></script> <script>     const paymentFees = <%- JSON.stringify(paymentFees || {}) %>; </script>     <style>         .tracking-wrapper { min-height: 100vh; background: linear-gradient(135deg,#f0f4f8,#e8f1fa 50%,#f5f0ff); padding-bottom: 64px; }         .tracking-container { max-width: 720px; margin: 0 auto; padding: 32px 16px; }         .tracking-card { background: white; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); overflow: hidden; }         .tracking-header { background: linear-gradient(135deg,#004e8c,#0066b2); color: white; padding: 32px; }         .tracking-header h1 { font-size: 24px; font-weight: 800; margin: 0 0 4px; }         .tracking-header p { font-size: 14px; opacity: 0.85; margin: 0; }         .order-number { font-size: 13px; background: rgba(255,255,255,0.15); border-radius: 8px; display: inline-block; padding: 4px 12px; margin-top: 12px; font-weight: 600; letter-spacing: 0.03em; }         .tracking-body { padding: 32px; }          /* Status timeline */         .timeline { position: relative; padding-left: 32px; margin: 24px 0; }         .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }         .timeline-item { position: relative; margin-bottom: 28px; }         .timeline-item:last-child { margin-bottom: 0; }         .timeline-dot { position: absolute; left: -28px; top: 2px; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #e2e8f0; background: white; transition: all 0.3s; }         .timeline-item.done .timeline-dot { background: #22c55e; border-color: #22c55e; }         .timeline-item.active .timeline-dot { background: #3b82f6; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.2); }         .timeline-item.pending .timeline-dot { background: white; border-color: #cbd5e1; }         .timeline-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }         .timeline-item.pending .timeline-title { color: #94a3b8; }         .timeline-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }          /* PO Pelunasan Card */         .settlement-card {             background: linear-gradient(135deg, #eff6ff, #dbeafe);             border: 2px solid #93c5fd;             border-radius: 16px;             padding: 24px;             margin: 24px 0;             box-shadow: 0 4px 20px rgba(59, 130, 246, 0.12);         }         .settlement-card h3 { font-size: 16px; font-weight: 800; color: #1e40af; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }         .settlement-card p { font-size: 13px; color: #1e3a8a; margin: 0 0 16px; line-height: 1.5; }         .settlement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: white; padding: 14px 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #bfdbfe; }         .settlement-item-lbl { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; }         .settlement-item-val { font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 2px; }         .settlement-due { color: #dc2626 !important; }                  .settlement-methods-grid {             display: grid;             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));             gap: 8px;             margin-bottom: 16px;         }         .settlement-method-card {             border: 1.5px solid #cbd5e1;             background: white;             padding: 8px 10px;             border-radius: 8px;             cursor: pointer;             font-size: 12px;             font-weight: 600;             display: flex;             align-items: center;             gap: 6px;             transition: all 0.2s;         }         .settlement-method-card:has(input:checked) {             border-color: #2563eb;             background: #eff6ff;             color: #1d4ed8;         }         .settlement-btn {             width: 100%;             padding: 14px;             background: linear-gradient(135deg, #2563eb, #1d4ed8);             color: white;             border: none;             border-radius: 12px;             font-size: 14px;             font-weight: 800;             cursor: pointer;             display: flex;             align-items: center;             justify-content: center;             gap: 8px;             box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);             transition: transform 0.15s ease;         }         .settlement-btn:hover { transform: translateY(-1px); }         .settlement-btn:disabled { opacity: 0.7; cursor: not-allowed; }          /* Info grid */         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }         @media(max-width:560px){ .info-grid { grid-template-columns: 1fr; } }         .info-item { background: #f8fafc; border-radius: 12px; padding: 16px; }         .info-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; }         .info-value { font-size: 14px; font-weight: 700; color: var(--text-primary); }          /* Items */         .items-section { margin-top: 24px; }         .items-section h3 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }         .order-item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid #f1f5f9; }         .order-item:first-of-type { border-top: none; }         .order-item img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #f1f5f9; }         .order-item-info { flex: 1; }         .order-item-name { font-size: 13px; font-weight: 600; }         .order-item-qty { font-size: 12px; color: #94a3b8; }         .order-item-price { font-size: 14px; font-weight: 700; }          /* Search form */         .search-section { background: white; border-radius: 20px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); text-align: center; }         .search-section h2 { font-size: 20px; font-weight: 800; margin: 0 0 8px; }         .search-section p { font-size: 14px; color: var(--text-secondary); margin: 0 0 20px; }         .search-input-row { display: flex; gap: 12px; max-width: 420px; margin: 0 auto; }         .search-input-row input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; font-family: inherit; }         .search-input-row input:focus { outline: none; border-color: var(--unm-blue); }         .search-input-row button { padding: 12px 20px; background: var(--unm-blue,#004e8c); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }         .not-found { color: #dc2626; background: #fef2f2; border-radius: 10px; padding: 12px 16px; font-size: 14px; margin-top: 12px; }         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }         .status-preorder { background: #fef3c7; color: #92400e; }         .status-ready { background: #dbeafe; color: #1e40af; }         .status-pending { background: #f1f5f9; color: #475569; }         .status-processing { background: #dbeafe; color: #1d4ed8; }         .status-completed { background: #dcfce7; color: #166534; }         .status-cancelled { background: #fee2e2; color: #991b1b; }     </style> </head> <body>     <%- include('partials/header.ejs', { currentPage: 'tracking' }) %>      <div class="tracking-wrapper">         <div class="tracking-container">             <% if (!order) { %>             <!-- Search Form -->             <div class="search-section">                 <h2>Lacak Pesanan</h2>                 <p>Masukkan nomor pesanan Anda untuk melihat status pengiriman & pembayaran</p>                 <form method="GET" action="/lacak-pesanan">                     <div class="search-input-row">                         <input type="text" name="no" placeholder="Contoh: D25-12345678" value="<%= query || '' %>">                         <button type="submit">Lacak</button>                     </div>                 </form>                 <% if (query && !order) { %>                 <div class="not-found">Nomor pesanan "<%= query %>" tidak ditemukan. Cek kembali nomor pesanan Anda.</div>                 <% } %>                  <!-- Recent Orders from Browser Storage -->                 <div id="recent-orders-box" style="display: none; margin-top: 24px; text-align: left; border-top: 1px solid #f1f5f9; padding-top: 20px;">                     <div style="font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">                         <span>Pesanan Terakhir di Perangkat Ini</span>                         <button type="button" onclick="clearRecentOrders()" style="border: none; background: none; color: #94a3b8; font-size: 11px; cursor: pointer; text-decoration: underline;">Hapus Riwayat</button>                     </div>                     <div id="recent-orders-list" style="display: flex; flex-direction: column; gap: 8px;"></div>                 </div>             </div>              <script>                 document.addEventListener('DOMContentLoaded', () => {                     try {                         const saved = JSON.parse(localStorage.getItem('d25_recent_orders') || '[]');                         const box = document.getElementById('recent-orders-box');                         const list = document.getElementById('recent-orders-list');                         if (saved.length > 0 && box && list) {                             box.style.display = 'block';                             list.innerHTML = saved.map(o => `                                 <a href="/lacak-pesanan?no=${o.number}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; text-decoration: none; color: inherit; transition: all 0.15s ease;">                                     <div>                                         <div style="font-weight: 700; font-size: 13px; color: #004e8c; font-family: monospace;">#${o.number}</div>                                         <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${new Date(o.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>                                     </div>                                     <div style="display: flex; align-items: center; gap: 8px;">                                         <span style="font-size: 12px; font-weight: 700; color: #0f172a;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(o.total)}</span>                                         <span style="font-size: 12px; color: #004e8c; font-weight: 700;">Lacak </span>                                     </div>                                 </a>                             `).join('');                         }                     } catch (e) {                         console.error(e);                     }                 });                  function clearRecentOrders() {                     localStorage.removeItem('d25_recent_orders');                     const box = document.getElementById('recent-orders-box');                     if (box) box.style.display = 'none';                 }             </script>              <% } else { %>             <!-- Order Found -->             <div class="tracking-card">                 <div class="tracking-header">                     <h1>Status Pesanan</h1>                     <p>Pesanan Anda sedang diproses</p>                     <div class="order-number">#<%= order.order_number %></div>                 </div>                  <div class="tracking-body">                     <% const redirectStatus = typeof require !== 'undefined' ? '' : ''; %>                      <% if (typeof query !== 'undefined') { %>                     <script>                         // Show status notification from checkout redirect                         document.addEventListener('DOMContentLoaded', function() {                             const params = new URLSearchParams(window.location.search);                             const st = params.get('status');                             const banner = document.getElementById('checkout-status-banner');                             if (st && banner) {                                 if (st === 'success') {                                     banner.innerHTML = '<strong>Pembayaran Berhasil!</strong> Pesanan Anda sedang diproses. Terima kasih!';                                     banner.style.background = '#f0fdf4';                                     banner.style.borderColor = '#86efac';                                     banner.style.color = '#166534';                                 } else if (st === 'pending') {                                     banner.innerHTML = '<strong>Pesanan Tercatat!</strong> Selesaikan pembayaran Anda di bawah ini agar pesanan segera diproses.';                                     banner.style.background = '#fffbeb';                                     banner.style.borderColor = '#fcd34d';                                     banner.style.color = '#92400e';                                 } else if (st === 'settled') {                                     banner.innerHTML = '<strong>Pelunasan Berhasil!</strong> Pesanan Pre-Order telah lunas sepenuhnya!';                                     banner.style.background = '#f0fdf4';                                     banner.style.borderColor = '#86efac';                                     banner.style.color = '#166534';                                 }                                 banner.style.display = 'flex';                             }                         });                     </script>                     <div id="checkout-status-banner" style="display: none; align-items: center; gap: 8px; padding: 14px 18px; border-radius: 12px; border: 1.5px solid transparent; font-size: 14px; font-weight: 600; margin-bottom: 20px;"></div>                     <% } %>                      <%                      const isPO = order.is_preorder || (order.notes && order.notes.includes('PRE-ORDER'));                     const baseTotal = Number(order.subtotal || order.total || 0);                     const dpAmt = Number(order.dp_amount || Math.round(baseTotal * ((order.dp_percentage || 50) / 100)));                     const remainingAmt = Math.max(baseTotal - dpAmt, 0);                     const isPaidFull = order.payment_status === 'paid';                     const isDPPaid = order.payment_status === 'dp_paid' || order.status === 'processing' || order.status === 'ready';                     %>  <div id="order-info" data-is-po="<%= isPO %>" data-dp-amt="<%= dpAmt %>" data-remaining-amt="<%= remainingAmt %>" data-is-paid-full="<%= isPaidFull %>" data-is-dp-paid="<%= isDPPaid %>" data-total="<%= baseTotal %>"></div>                     <% if (isPO && !isPaidFull) { %>                     <!-- Tagihan Pelunasan Pre-Order Card -->                     <div class="settlement-card">                         <h3><%= isDPPaid ? 'Tagihan Sisa Pelunasan Pre-Order' : 'Tagihan Pembayaran DP Pre-Order' %></h3>                         <p><%= isDPPaid ? 'Uang Muka (DP) telah dicatat. Silakan lakukan pelunasan sisa tagihan di bawah ini agar pesanan dapat segera dikirim.' : 'Pesanan Pre-Order Anda siap diproses setelah pembayaran DP diselesaikan.' %></p>                                                  <div class="settlement-grid">                             <div>                                 <div class="settlement-item-lbl">Total Nilai Pesanan</div>                                 <div class="settlement-item-val"><%= formatRupiah(baseTotal) %></div>                             </div>                             <div>                                 <div class="settlement-item-lbl">DP (<%= order.dp_percentage || 50 %>%)</div>                                 <div class="settlement-item-val" style="color:<%= isDPPaid ? '#16a34a' : '#ea580c' %>;"><%= formatRupiah(dpAmt) %> <%= isDPPaid ? '(Tercatat Lunas)' : '(Harus Dibayar)' %></div>                             </div>                             <div style="grid-column: 1/-1; border-top: 1px dashed #bfdbfe; padding-top: 8px;">                                 <div class="settlement-item-lbl" id="settlement-due-label"><%= isDPPaid ? 'Total Tagihan Saat Ini (Sisa + Bea Admin)' : 'Total Tagihan Saat Ini (DP + Bea Admin)' %></div>                                 <div class="settlement-item-val settlement-due" id="settlement-due-value">Menghitung...</div>                             </div>                         </div>                          <button type="button" class="settlement-btn" id="btn-pay-settlement" data-order-number="<%= order.order_number %>">                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>                             <span>Memuat total tagihan...</span>                         </button>                     </div>                     <% } else if (!isPO && !isPaidFull) { %>                     <!-- Tagihan Pembayaran Regular Card -->                     <div class="settlement-card" style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #f59e0b;">                         <h3 style="color: #92400e;">Tagihan Pembayaran Pesanan</h3>                         <p style="color: #78350f;">Pesanan Anda belum dibayar. Silakan lakukan pembayaran online di bawah ini agar pesanan dapat segera dikemas.</p>                                                  <div class="settlement-grid" style="border-color: #fde68a;">                             <div style="grid-column: 1/-1;">                                 <div class="settlement-item-lbl">Total Tagihan yang Harus Dibayar</div>                                 <div class="settlement-item-val settlement-due" id="settlement-due-value" style="font-size: 22px;">Menghitung...</div>                             </div>                         </div>                          <button type="button" class="settlement-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" id="btn-pay-settlement" data-order-number="<%= order.order_number %>" onclick="paySettlement('<%= order.order_number %>')">                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>                             <span>Memuat total tagihan...</span>                         </button>                     </div>                     <% } else if (isPaidFull) { %>                     <div style="background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; color: #166534; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;">                         Pesanan Ini Telah LUNAS Sepenuhnya. Terima kasih!                     </div>                     <% } %>                      <!-- Status Timeline -->                     <div class="timeline">                         <%                         const statusSteps = isPO ? [                             { key: 'preorder', label: 'Pre Order Dibuat', sub: 'Pesanan masuk ke antrean PO' },                             { key: 'dp_paid', label: 'DP Diterima', sub: 'Uang muka pembayaran berhasil' },                             { key: 'processing', label: 'Sedang Diproduksi', sub: 'Produk sedang disiapkan' },                             { key: 'ready', label: 'Siap Dikirim / Pelunasan', sub: 'Pesanan selesai & siap dilunasi' },                             { key: 'completed', label: 'Selesai & Terkirim', sub: 'Pesanan telah diterima pelanggan' }                         ] : [                             { key: 'pending', label: 'Pesanan Masuk', sub: 'Pesanan berhasil dibuat' },                             { key: 'paid', label: 'Pembayaran Diterima', sub: 'Pembayaran berhasil dikonfirmasi' },                             { key: 'processing', label: 'Sedang Diproses', sub: 'Pesanan sedang dikemas' },                             { key: 'completed', label: 'Selesai & Terkirim', sub: 'Pesanan telah dikirim' }                         ];                          const currentStatus = order.status;                         const payStatus = order.payment_status;                         const statusOrder = ['preorder','pending','dp_paid','processing','ready','completed'];                         const currentIdx = statusOrder.indexOf(currentStatus);                         %>                          <% statusSteps.forEach((step, i) => {                             let state = 'pending';                             const stepIdx = statusOrder.indexOf(step.key);                             if (step.key === 'paid' && payStatus === 'paid') state = 'done';                             else if (step.key === 'dp_paid' && (payStatus === 'dp_paid' || payStatus === 'paid')) state = 'done';                             else if (step.key === 'pending' || step.key === 'preorder') state = 'done';                             else if (stepIdx < currentIdx) state = 'done';                             else if (stepIdx === currentIdx) state = 'active';                         %>                         <div class="timeline-item <%= state %>">                             <div class="timeline-dot"></div>                             <div class="timeline-title"><%= step.label %></div>                             <div class="timeline-subtitle"><%= step.sub %></div>                         </div>                         <% }); %>                     </div>                      <!-- Info Grid -->                     <div class="info-grid">                         <div class="info-item">                             <div class="info-label">Status Pesanan</div>                             <div class="info-value">                                 <span class="status-badge status-<%= order.status %>">                                     <%= {pending:'Menunggu',preorder:'Pre Order',processing:'Diproses',ready:'Siap Dikirim',completed:'Selesai',cancelled:'Dibatalkan'}[order.status] || order.status %>                                 </span>                             </div>                         </div>                         <div class="info-item">                             <div class="info-label">Status Pembayaran</div>                             <div class="info-value">                                 <% if (order.payment_status === 'paid') { %>                                     <span style="color:#16a34a;font-weight:700;">Lunas (100%)</span>                                 <% } else if (order.payment_status === 'dp_paid') { %>                                     <span style="color:#2563eb;font-weight:700;">DP Terbayar</span>                                 <% } else { %>                                     <span style="color:#d97706;font-weight:700;">Belum Bayar</span>                                 <% } %>                             </div>                         </div>                         <div class="info-item">                             <div class="info-label">Nama Pemesan</div>                             <div class="info-value"><%= order.customer_name %></div>                         </div>                         <div class="info-item">                             <div class="info-label">Total Pesanan</div>                             <div class="info-value"><%= formatRupiah(Number(order.subtotal || order.total || 0)) %></div>                         </div>                         <div class="info-item" style="grid-column: 1/-1;">                             <div class="info-label">Alamat Pengiriman</div>                             <div class="info-value" style="font-weight:500;"><%= order.customer_address %></div>                         </div>                         <% if (order.notes) { %>                         <div class="info-item" style="grid-column: 1/-1;">                             <div class="info-label">Catatan Pesanan</div>                             <div class="info-value" style="font-weight:500;"><%= order.notes %></div>                         </div>                         <% } %>                     </div>                      <!-- Items -->                     <% if (order.order_items && order.order_items.length > 0) { %>                     <div class="items-section">                         <h3>Item Pesanan</h3>                         <% order.order_items.forEach(item => { %>                         <div class="order-item">                             <img src="<%= item.product_image_url || '/images/placeholder-product.svg' %>"                                   alt="<%= item.product_name %>"                                  onerror="this.src='/images/placeholder-product.svg'">                             <div class="order-item-info">                                 <div class="order-item-name"><%= item.product_name %></div>                                 <% if (item.size) { %>                                 <div class="order-item-qty">Ukuran: <%= item.size %></div>                                 <% } %>                                 <div class="order-item-qty">Qty: <%= item.quantity %></div>                             </div>                             <div class="order-item-price"><%= formatRupiah(item.total_price) %></div>                         </div>                         <% }); %>                     </div>                     <% } %>                      <div style="margin-top:24px;text-align:center;display:flex;gap:12px;justify-content:center;">                         <a href="/lacak-pesanan" style="display:inline-block;padding:10px 20px;background:#e2e8f0;color:#334155;border-radius:12px;font-weight:700;text-decoration:none;font-size:13px;">Lacak Pesanan Lain</a>                         <a href="/" style="display:inline-block;padding:10px 20px;background:var(--unm-blue,#004e8c);color:white;border-radius:12px;font-weight:700;text-decoration:none;font-size:13px;">Kembali ke Beranda</a>                     </div>                 </div>             </div>             <% } %>         </div>     </div>      <script>         const paymentMethodKey = <%- JSON.stringify((order && order.payment_method) || 'bank_bca') %>;
+<!DOCTYPE html>
+<html lang="id">
 
-async function paySettlement(orderNumber) {
-    const btn = document.getElementById('btn-pay-settlement');
-    if (!btn) return;
-
-    const methodKey = paymentMethodKey || 'bank_bca';
-
-    btn.disabled = true;
-    btn.textContent = 'Memuat Pembayaran...';
-
-    try {
-        const response = await fetch(`/api/orders/${orderNumber}/pelunasan`, {
-   method: 'POST',
-   headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({ payment_method: methodKey })
-        });
-
-        const result = await response.json();
-        if (!result.success) {
-   throw new Error(result.message || 'Gagal memproses pelunasan');
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lacak Pesanan - D25 Teknologi Pendidikan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Midtrans Snap Script -->
+    <script
+        src="<%= (typeof midtransIsProduction !== 'undefined' && midtransIsProduction) ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' %>"
+        data-client-key="<%= typeof midtransClientKey !== 'undefined' ? midtransClientKey : '' %>"></script>
+    <script>     const paymentFees = JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(paymentFees || {})) %>")); </script>
+    <style>
+        .tracking-wrapper {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4f8, #e8f1fa 50%, #f5f0ff);
+            padding-bottom: 64px;
         }
 
-        const paymentState = {
-   orderNumber,
-   methodKey,
-   amount: result.amountDue || result.remainingAmount || 0,
-   createdAt: Date.now()
-        };
-        sessionStorage.setItem('d25_last_settlement', JSON.stringify(paymentState));
-
-        if (result.snapToken && typeof window.snap !== 'undefined') {
-   window.snap.pay(result.snapToken, {
-       onSuccess: function() {
-           sessionStorage.removeItem('d25_last_settlement');
-           alert('Pembayaran pelunasan berhasil!');
-           window.location.href = `/lacak-pesanan?no=${orderNumber}`;
-       },
-       onPending: function() {
-           sessionStorage.removeItem('d25_last_settlement');
-           alert('Pembayaran sedang diproses. Mohon selesaikan transfer.');
-           window.location.href = `/lacak-pesanan?no=${orderNumber}&status=pending`;
-       },
-       onError: function() {
-           sessionStorage.removeItem('d25_last_settlement');
-           alert('Pembayaran gagal atau dibatalkan.');
-           btn.disabled = false;
-           btn.textContent = 'Bayar Pelunasan Sekarang';
-       },
-       onClose: function() {
-           sessionStorage.setItem('d25_last_settlement', JSON.stringify(paymentState));
-           btn.disabled = false;
-           btn.textContent = 'Bayar Pelunasan Sekarang';
-           window.location.href = `/lacak-pesanan?no=${orderNumber}`;
-       }
-   });
-        } else if (result.redirectUrl) {
-   sessionStorage.removeItem('d25_last_settlement');
-   window.location.href = result.redirectUrl;
-        } else {
-   sessionStorage.removeItem('d25_last_settlement');
-   alert('Silakan hubungi admin untuk menyelesaikan pelunasan.');
+        .tracking-container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 32px 16px;
         }
-    } catch (err) {
-        sessionStorage.removeItem('d25_last_settlement');
-        alert('Error: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Bayar Pelunasan Sekarang';
-    }
-}
 
-function getBaseDueAmount() {
-    const infoDiv = document.getElementById('order-info');
-    if (!infoDiv) return { baseAmount: 0, labelPrefix: 'Bayar Sekarang ? ' };
+        .tracking-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
 
-    const isPO = infoDiv.dataset.isPo === 'true';
-    const dpAmt = parseFloat(infoDiv.dataset.dpAmt || '0');
-    const remainingAmt = parseFloat(infoDiv.dataset.remainingAmt || '0');
-    const isPaidFull = infoDiv.dataset.isPaidFull === 'true';
-    const isDPPaid = infoDiv.dataset.isDpPaid === 'true';
-    const total = parseFloat(infoDiv.dataset.total || '0');
+        .tracking-header {
+            background: linear-gradient(135deg, #004e8c, #0066b2);
+            color: white;
+            padding: 32px;
+        }
 
-    if (isPO && !isPaidFull) {
-        const baseAmount = isDPPaid ? remainingAmt : dpAmt;
-        return {
-   baseAmount,
-   labelPrefix: isDPPaid ? 'Bayar Pelunasan Sekarang ? ' : 'Bayar DP Sekarang ? ',
-   amountType: isDPPaid ? 'remaining' : 'dp'
-        };
-    }
+        .tracking-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0 0 4px;
+        }
 
-    if (!isPO && !isPaidFull) {
-        return {
-   baseAmount: total,
-   labelPrefix: 'Bayar Sekarang ? ',
-   amountType: 'total'
-        };
-    }
+        .tracking-header p {
+            font-size: 14px;
+            opacity: 0.85;
+            margin: 0;
+        }
 
-    return { baseAmount: 0, labelPrefix: 'Bayar Sekarang ? ', amountType: 'none' };
-}
+        .order-number {
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            display: inline-block;
+            padding: 4px 12px;
+            margin-top: 12px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
 
-function getMethodFee(baseAmount, methodKey) {
-    const methodConfig = paymentFees?.[methodKey] || null;
-    if (!methodConfig) return 0;
-    if (methodConfig.type === 'flat') {
-        return Number(methodConfig.value || 0);
-    }
-    const pct = Number(methodConfig.value || 0);
-    return Math.round(baseAmount * (pct / 100));
-}
+        .tracking-body {
+            padding: 32px;
+        }
 
-function getSavedSettlementState(orderNumber) {
-    try {
-        const raw = sessionStorage.getItem('d25_last_settlement');
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed || parsed.orderNumber !== orderNumber) return null;
-        return parsed;
-    } catch (e) {
-        return null;
-    }
-}
+        /* Status timeline */
+        .timeline {
+            position: relative;
+            padding-left: 32px;
+            margin: 24px 0;
+        }
 
-function updateSettlementButton() {
-    const btn = document.getElementById('btn-pay-settlement');
-    if (!btn) return;
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
+        }
 
-    const methodKey = paymentMethodKey || 'bank_bca';
-    const baseDue = getBaseDueAmount();
-    const fee = getMethodFee(baseDue.baseAmount, methodKey);
-    const finalAmount = baseDue.baseAmount + fee;
-    const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(finalAmount);
+        .timeline-item {
+            position: relative;
+            margin-bottom: 28px;
+        }
 
-    const dueText = document.getElementById('settlement-due-value');
-    const dueLabel = document.getElementById('settlement-due-label');
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
 
-    if (dueText) {
-        dueText.textContent = formatted;
-    }
-    if (dueLabel) {
-        dueLabel.textContent = baseDue.amountType === 'remaining'
-   ? 'Total Tagihan Saat Ini (Sisa + Bea Admin)'
-   : (baseDue.amountType === 'total'
-       ? 'Total Tagihan Saat Ini (Harga Barang + Bea Admin)'
-       : 'Total Tagihan Saat Ini (DP + Bea Admin)');
-    }
+        .timeline-dot {
+            position: absolute;
+            left: -28px;
+            top: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s;
+        }
 
-    const svgElement = btn.querySelector('svg');
-    btn.innerHTML = (svgElement ? svgElement.outerHTML : '') + ' ' + baseDue.labelPrefix + formatted;
-    btn.dataset.amountDue = String(finalAmount);
-}
+        .timeline-item.done .timeline-dot {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const settleBtn = document.getElementById('btn-pay-settlement');
-    if (settleBtn) {
-        settleBtn.addEventListener('click', function() {
-            paySettlement(settleBtn.dataset.orderNumber || '');
-        });
-    }
-    updateSettlementButton();
-});
-</script>     <%- include('partials/footer.ejs') %> </body> </html>
+        .timeline-item.active .timeline-dot {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
 
+        .timeline-item.pending .timeline-dot {
+            background: white;
+            border-color: #cbd5e1;
+        }
+
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .timeline-item.pending .timeline-title {
+            color: #94a3b8;
+        }
+
+        .timeline-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* PO Pelunasan Card */
+        .settlement-card {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 2px solid #93c5fd;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 24px 0;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.12);
+        }
+
+        .settlement-card h3 {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1e40af;
+            margin: 0 0 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settlement-card p {
+            font-size: 13px;
+            color: #1e3a8a;
+            margin: 0 0 16px;
+            line-height: 1.5;
+        }
+
+        .settlement-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: white;
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #bfdbfe;
+        }
+
+        .settlement-item-lbl {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .settlement-item-val {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 2px;
+        }
+
+        .settlement-due {
+            color: #dc2626 !important;
+        }
+
+        .settlement-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .settlement-method-card {
+            border: 1.5px solid #cbd5e1;
+            background: white;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .settlement-method-card:has(input:checked) {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .settlement-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            transition: transform 0.15s ease;
+        }
+
+        .settlement-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .settlement-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Info grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        @media(max-width:560px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Items */
+        .items-section {
+            margin-top: 24px;
+        }
+
+        .items-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0 0 12px;
+        }
+
+        .order-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 0;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .order-item:first-of-type {
+            border-top: none;
+        }
+
+        .order-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+
+        .order-item-info {
+            flex: 1;
+        }
+
+        .order-item-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .order-item-qty {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .order-item-price {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        /* Search form */
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+            text-align: center;
+        }
+
+        .search-section h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0 0 8px;
+        }
+
+        .search-section p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0 0 20px;
+        }
+
+        .search-input-row {
+            display: flex;
+            gap: 12px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .search-input-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .search-input-row input:focus {
+            outline: none;
+            border-color: var(--unm-blue);
+        }
+
+        .search-input-row button {
+            padding: 12px 20px;
+            background: var(--unm-blue, #004e8c);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .not-found {
+            color: #dc2626;
+            background: #fef2f2;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-preorder {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-ready {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-pending {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .status-processing {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+
+<body> <%- include('partials/header.ejs', { currentPage: 'tracking' }) %>
+        <div class="tracking-wrapper">
+            <div class="tracking-container">
+                <% if (!order) { %> <!-- Search Form -->
+                    <div class="search-section">
+                        <h2>Lacak Pesanan</h2>
+                        <p>Masukkan nomor pesanan Anda untuk melihat status pengiriman & pembayaran</p>
+                        <form method="GET" action="/lacak-pesanan">
+                            <div class="search-input-row"> <input type="text" name="no"
+                                    placeholder="Contoh: D25-12345678" value="<%= query || '' %>"> <button
+                                    type="submit">Lacak</button> </div>
+                        </form>
+                        <% if (query && !order) { %>
+                            <div class="not-found">Nomor pesanan "<%= query %>" tidak ditemukan. Cek kembali nomor
+                                    pesanan Anda.</div>
+                            <% } %> <!-- Recent Orders from Browser Storage -->
+                                <div id="recent-orders-box"
+                                    style="display: none; margin-top: 24px; text-align: left; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                                    <div
+                                        style="font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                        <span>Pesanan Terakhir di Perangkat Ini</span> <button type="button"
+                                            onclick="clearRecentOrders()"
+                                            style="border: none; background: none; color: #94a3b8; font-size: 11px; cursor: pointer; text-decoration: underline;">Hapus
+                                            Riwayat</button>
+                                    </div>
+                                    <div id="recent-orders-list"
+                                        style="display: flex; flex-direction: column; gap: 8px;"></div>
+                                </div>
+                    </div>
+                    <script>                 document.addEventListener('DOMContentLoaded', () => { try { const saved = JSON.parse(localStorage.getItem('d25_recent_orders') || '[]'); const box = document.getElementById('recent-orders-box'); const list = document.getElementById('recent-orders-list'); if (saved.length > 0 && box && list) { box.style.display = 'block'; list.innerHTML = saved.map(o => `                                 <a href="/lacak-pesanan?no=${o.number}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; text-decoration: none; color: inherit; transition: all 0.15s ease;">                                     <div>                                         <div style="font-weight: 700; font-size: 13px; color: #004e8c; font-family: monospace;">#${o.number}</div>                                         <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${new Date(o.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>                                     </div>                                     <div style="display: flex; align-items: center; gap: 8px;">                                         <span style="font-size: 12px; font-weight: 700; color: #0f172a;">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(o.total)}</span>                                         <span style="font-size: 12px; color: #004e8c; font-weight: 700;">Lacak </span>                                     </div>                                 </a>                             `).join(''); } } catch (e) { console.error(e); } }); function clearRecentOrders() { localStorage.removeItem('d25_recent_orders'); const box = document.getElementById('recent-orders-box'); if (box) box.style.display = 'none'; }             </script>
+                    <% } else { %> <!-- Order Found -->
+                        <div class="tracking-card">
+                            <div class="tracking-header">
+                                <h1>Status Pesanan</h1>
+                                <p>Pesanan Anda sedang diproses</p>
+                                <div class="order-number">#<%= order.order_number %>
+                                </div>
+                            </div>
+                            <div class="tracking-body">
+                                <% const redirectStatus=typeof require !=='undefined' ? '' : '' ; %>
+                                    <% if (typeof query !=='undefined' ) { %>
+                                        <script>                         // Show status notification from checkout redirect                         document.addEventListener('DOMContentLoaded', function() {                             const params = new URLSearchParams(window.location.search);                             const st = params.get('status');                             const banner = document.getElementById('checkout-status-banner');                             if (st && banner) {                                 if (st === 'success') {                                     banner.innerHTML = '<strong>Pembayaran Berhasil!</strong> Pesanan Anda sedang diproses. Terima kasih!';                                     banner.style.background = '#f0fdf4';                                     banner.style.borderColor = '#86efac';                                     banner.style.color = '#166534';                                 } else if (st === 'pending') {                                     banner.innerHTML = '<strong>Pesanan Tercatat!</strong> Selesaikan pembayaran Anda di bawah ini agar pesanan segera diproses.';                                     banner.style.background = '#fffbeb';                                     banner.style.borderColor = '#fcd34d';                                     banner.style.color = '#92400e';                                 } else if (st === 'settled') {                                     banner.innerHTML = '<strong>Pelunasan Berhasil!</strong> Pesanan Pre-Order telah lunas sepenuhnya!';                                     banner.style.background = '#f0fdf4';                                     banner.style.borderColor = '#86efac';                                     banner.style.color = '#166534';                                 }                                 banner.style.display = 'flex';                             }                         });                     </script>
+                                        <div id="checkout-status-banner"
+                                            style="display: none; align-items: center; gap: 8px; padding: 14px 18px; border-radius: 12px; border: 1.5px solid transparent; font-size: 14px; font-weight: 600; margin-bottom: 20px;">
+                                        </div>
+                                        <% } %>
+                                            <% const isPO=order.is_preorder || (order.notes &&
+                                                order.notes.includes('PRE-ORDER')); const
+                                                baseTotal=Number(order.subtotal || order.total || 0); const
+                                                dpAmt=Number(order.dp_amount || Math.round(baseTotal *
+                                                ((order.dp_percentage || 50) / 100))); const
+                                                remainingAmt=Math.max(baseTotal - dpAmt, 0); const
+                                                isPaidFull=order.payment_status==='paid' ; const
+                                                isDPPaid=order.payment_status==='dp_paid' || order.status==='processing'
+                                                || order.status==='ready' ; %>
+                                                <div id="order-info" data-is-po="<%= isPO %>" data-dp-amt="<%= dpAmt %>"
+                                                    data-remaining-amt="<%= remainingAmt %>"
+                                                    data-is-paid-full="<%= isPaidFull %>"
+                                                    data-is-dp-paid="<%= isDPPaid %>" data-total="<%= baseTotal %>">
+                                                </div>
+                                                <% if (isPO && !isPaidFull) { %>
+                                                    <!-- Tagihan Pelunasan Pre-Order Card -->
+                                                    <div class="settlement-card">
+                                                        <h3>
+                                                            <%= isDPPaid ? 'Tagihan Sisa Pelunasan Pre-Order'
+                                                                : 'Tagihan Pembayaran DP Pre-Order' %>
+                                                        </h3>
+                                                        <p>
+                                                            <%= isDPPaid
+                                                                ? 'Uang Muka (DP) telah dicatat. Silakan lakukan pelunasan sisa tagihan di bawah ini agar pesanan dapat segera dikirim.'
+                                                                : 'Pesanan Pre-Order Anda siap diproses setelah pembayaran DP diselesaikan.'
+                                                                %>
+                                                        </p>
+                                                        <div class="settlement-grid">
+                                                            <div>
+                                                                <div class="settlement-item-lbl">Total Nilai Pesanan
+                                                                </div>
+                                                                <div class="settlement-item-val">
+                                                                    <%= formatRupiah(baseTotal) %>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div class="settlement-item-lbl">DP (<%=
+                                                                        order.dp_percentage || 50 %>%)</div>
+                                                                <div class="settlement-item-val"
+                                                                    style="color:<%= isDPPaid ? '#16a34a' : '#ea580c' %>;">
+                                                                    <%= formatRupiah(dpAmt) %>
+                                                                        <%= isDPPaid ? '(Tercatat Lunas)'
+                                                                            : '(Harus Dibayar)' %>
+                                                                </div>
+                                                            </div>
+                                                            <div
+                                                                style="grid-column: 1/-1; border-top: 1px dashed #bfdbfe; padding-top: 8px;">
+                                                                <div class="settlement-item-lbl"
+                                                                    id="settlement-due-label">
+                                                                    <%= isDPPaid
+                                                                        ? 'Total Tagihan Saat Ini (Sisa + Bea Admin)'
+                                                                        : 'Total Tagihan Saat Ini (DP + Bea Admin)' %>
+                                                                </div>
+                                                                <div class="settlement-item-val settlement-due"
+                                                                    id="settlement-due-value">Menghitung...</div>
+                                                            </div>
+                                                        </div> <button type="button" class="settlement-btn"
+                                                            id="btn-pay-settlement"
+                                                            data-order-number="<%= order.order_number %>"> <svg
+                                                                width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2.5">
+                                                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2">
+                                                                </rect>
+                                                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                                                            </svg> <span>Memuat total tagihan...</span> </button>
+                                                    </div>
+                                                    <% } else if (!isPO && !isPaidFull) { %>
+                                                        <!-- Tagihan Pembayaran Regular Card -->
+                                                        <div class="settlement-card"
+                                                            style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #f59e0b;">
+                                                            <h3 style="color: #92400e;">Tagihan Pembayaran Pesanan</h3>
+                                                            <p style="color: #78350f;">Pesanan Anda belum dibayar.
+                                                                Silakan lakukan pembayaran online di bawah ini agar
+                                                                pesanan dapat segera dikemas.</p>
+                                                            <div class="settlement-grid" style="border-color: #fde68a;">
+                                                                <div style="grid-column: 1/-1;">
+                                                                    <div class="settlement-item-lbl">Total Tagihan yang
+                                                                        Harus Dibayar</div>
+                                                                    <div class="settlement-item-val settlement-due"
+                                                                        id="settlement-due-value"
+                                                                        style="font-size: 22px;">Menghitung...</div>
+                                                                </div>
+                                                            </div> <button type="button" class="settlement-btn"
+                                                                style="background: linear-gradient(135deg, #f59e0b, #d97706);"
+                                                                id="btn-pay-settlement"
+                                                                data-order-number="<%= order.order_number %>"
+                                                                onclick="paySettlement('<%= order.order_number %>')">
+                                                                <svg width="18" height="18" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor"
+                                                                    stroke-width="2.5">
+                                                                    <rect x="1" y="4" width="22" height="16" rx="2"
+                                                                        ry="2"></rect>
+                                                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                                                </svg> <span>Memuat total tagihan...</span> </button>
+                                                        </div>
+                                                        <% } else if (isPaidFull) { %>
+                                                            <div
+                                                                style="background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; color: #166534; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                                                Pesanan Ini Telah LUNAS Sepenuhnya. Terima kasih! </div>
+                                                            <% } %> <!-- Status Timeline -->
+                                                                <div class="timeline">
+                                                                    <% const statusSteps=isPO ? [ { key: 'preorder' ,
+                                                                        label: 'Pre Order Dibuat' ,
+                                                                        sub: 'Pesanan masuk ke antrean PO' }, {
+                                                                        key: 'dp_paid' , label: 'DP Diterima' ,
+                                                                        sub: 'Uang muka pembayaran berhasil' }, {
+                                                                        key: 'processing' , label: 'Sedang Diproduksi' ,
+                                                                        sub: 'Produk sedang disiapkan' }, { key: 'ready'
+                                                                        , label: 'Siap Dikirim / Pelunasan' ,
+                                                                        sub: 'Pesanan selesai & siap dilunasi' }, {
+                                                                        key: 'completed' , label: 'Selesai & Terkirim' ,
+                                                                        sub: 'Pesanan telah diterima pelanggan' } ] : [
+                                                                        { key: 'pending' , label: 'Pesanan Masuk' ,
+                                                                        sub: 'Pesanan berhasil dibuat' }, { key: 'paid'
+                                                                        , label: 'Pembayaran Diterima' ,
+                                                                        sub: 'Pembayaran berhasil dikonfirmasi' }, {
+                                                                        key: 'processing' , label: 'Sedang Diproses' ,
+                                                                        sub: 'Pesanan sedang dikemas' }, {
+                                                                        key: 'completed' , label: 'Selesai & Terkirim' ,
+                                                                        sub: 'Pesanan telah dikirim' } ]; const
+                                                                        currentStatus=order.status; const
+                                                                        payStatus=order.payment_status; const
+                                                                        statusOrder=['preorder','pending','dp_paid','processing','ready','completed'];
+                                                                        const
+                                                                        currentIdx=statusOrder.indexOf(currentStatus);
+                                                                        %>
+                                                                        <% statusSteps.forEach((step, i)=> { let state =
+                                                                            'pending'; const stepIdx =
+                                                                            statusOrder.indexOf(step.key); if (step.key
+                                                                            === 'paid' && payStatus === 'paid') state =
+                                                                            'done'; else if (step.key === 'dp_paid' &&
+                                                                            (payStatus === 'dp_paid' || payStatus ===
+                                                                            'paid')) state = 'done'; else if (step.key
+                                                                            === 'pending' || step.key === 'preorder')
+                                                                            state = 'done'; else if (stepIdx <
+                                                                                currentIdx) state='done' ; else if
+                                                                                (stepIdx===currentIdx) state='active' ;
+                                                                                %>
+                                                                                <div class="timeline-item <%= state %>">
+                                                                                    <div class="timeline-dot"></div>
+                                                                                    <div class="timeline-title">
+                                                                                        <%= step.label %>
+                                                                                    </div>
+                                                                                    <div class="timeline-subtitle">
+                                                                                        <%= step.sub %>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <% }); %>
+                                                                </div> <!-- Info Grid -->
+                                                                <div class="info-grid">
+                                                                    <div class="info-item">
+                                                                        <div class="info-label">Status Pesanan</div>
+                                                                        <div class="info-value"> <span
+                                                                                class="status-badge status-<%= order.status %>">
+                                                                                <%- ({pending:'Menunggu',preorder:'Pre\u0020Order',processing:'Diproses',ready:'Siap\u0020Dikirim',completed:'Selesai',cancelled:'Dibatalkan'}[order.status]||order.status)
+                                                                                    %>
+                                                                            </span> </div>
+                                                                    </div>
+                                                                    <div class="info-item">
+                                                                        <div class="info-label">Status Pembayaran</div>
+                                                                        <div class="info-value">
+                                                                            <% if (order.payment_status==='paid' ) { %>
+                                                                                <span
+                                                                                    style="color:#16a34a;font-weight:700;">Lunas
+                                                                                    (100%)</span>
+                                                                                <% } else if
+                                                                                    (order.payment_status==='dp_paid' )
+                                                                                    { %> <span
+                                                                                        style="color:#2563eb;font-weight:700;">DP
+                                                                                        Terbayar</span>
+                                                                                    <% } else { %> <span
+                                                                                            style="color:#d97706;font-weight:700;">Belum
+                                                                                            Bayar</span>
+                                                                                        <% } %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="info-item">
+                                                                        <div class="info-label">Nama Pemesan</div>
+                                                                        <div class="info-value">
+                                                                            <%= order.customer_name %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="info-item">
+                                                                        <div class="info-label">Total Pesanan</div>
+                                                                        <div class="info-value">
+                                                                            <%= formatRupiah(Number(order.subtotal ||
+                                                                                order.total || 0)) %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="info-item" style="grid-column: 1/-1;">
+                                                                        <div class="info-label">Alamat Pengiriman</div>
+                                                                        <div class="info-value"
+                                                                            style="font-weight:500;">
+                                                                            <%= order.customer_address %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <% if (order.notes) { %>
+                                                                        <div class="info-item"
+                                                                            style="grid-column: 1/-1;">
+                                                                            <div class="info-label">Catatan Pesanan
+                                                                            </div>
+                                                                            <div class="info-value"
+                                                                                style="font-weight:500;">
+                                                                                <%= order.notes %>
+                                                                            </div>
+                                                                        </div>
+                                                                        <% } %>
+                                                                </div> <!-- Items -->
+                                                                <% if (order.order_items && order.order_items.length> 0)
+                                                                    { %> <div class="items-section">
+                                                                        <h3>Item Pesanan</h3>
+                                                                        <% order.order_items.forEach(item=> { %> <div
+                                                                                class="order-item"> <img
+                                                                                    src="<%= item.product_image_url || '/images/placeholder-product.svg' %>"
+                                                                                    alt="<%= item.product_name %>"
+                                                                                    onerror="this.src='/images/placeholder-product.svg'">
+                                                                                <div class="order-item-info">
+                                                                                    <div class="order-item-name">
+                                                                                        <%= item.product_name %>
+                                                                                    </div>
+                                                                                    <% if (item.size) { %>
+                                                                                        <div class="order-item-qty">
+                                                                                            Ukuran: <%= item.size %>
+                                                                                        </div>
+                                                                                        <% } %>
+                                                                                            <div class="order-item-qty">
+                                                                                                Qty: <%= item.quantity
+                                                                                                    %>
+                                                                                            </div>
+                                                                                </div>
+                                                                                <div class="order-item-price">
+                                                                                    <%= formatRupiah(item.total_price)
+                                                                                        %>
+                                                                                </div>
+                                                                            </div>
+                                                                            <% }); %>
+                                                                    </div>
+                                                                    <% } %>
+                                                                        <div
+                                                                            style="margin-top:24px;text-align:center;display:flex;gap:12px;justify-content:center;">
+                                                                            <a href="/lacak-pesanan"
+                                                                                style="display:inline-block;padding:10px 20px;background:#e2e8f0;color:#334155;border-radius:12px;font-weight:700;text-decoration:none;font-size:13px;">Lacak
+                                                                                Pesanan Lain</a> <a href="/"
+                                                                                style="display:inline-block;padding:10px 20px;background:var(--unm-blue,#004e8c);color:white;border-radius:12px;font-weight:700;text-decoration:none;font-size:13px;">Kembali
+                                                                                ke Beranda</a>
+                                                                        </div>
+                            </div>
+                        </div>
+                        <% } %>
+            </div>
+        </div>
+        <script>         const paymentMethodKey = JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify((order && order.payment_method) || 'bank_bca')) %>"));
+
+            async function paySettlement(orderNumber) {
+                const btn = document.getElementById('btn-pay-settlement');
+                if (!btn) return;
+
+                const methodKey = paymentMethodKey || 'bank_bca';
+
+                btn.disabled = true;
+                btn.textContent = 'Memuat Pembayaran...';
+
+                try {
+                    const response = await fetch(`/api/orders/${orderNumber}/pelunasan`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ payment_method: methodKey })
+                    });
+
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.message || 'Gagal memproses pelunasan');
+                    }
+
+                    const paymentState = {
+                        orderNumber,
+                        methodKey,
+                        amount: result.amountDue || result.remainingAmount || 0,
+                        createdAt: Date.now()
+                    };
+                    sessionStorage.setItem('d25_last_settlement', JSON.stringify(paymentState));
+
+                    if (result.snapToken && typeof window.snap !== 'undefined') {
+                        window.snap.pay(result.snapToken, {
+                            onSuccess: function () {
+                                sessionStorage.removeItem('d25_last_settlement');
+                                showToast('Pembayaran pelunasan berhasil!', 'success');
+                                window.location.href = `/lacak-pesanan?no=${orderNumber}`;
+                            },
+                            onPending: function () {
+                                sessionStorage.removeItem('d25_last_settlement');
+                                showToast('Pembayaran sedang diproses. Mohon selesaikan transfer.', 'info');
+                                window.location.href = `/lacak-pesanan?no=${orderNumber}&status=pending`;
+                            },
+                            onError: function () {
+                                sessionStorage.removeItem('d25_last_settlement');
+                                showToast('Pembayaran gagal atau dibatalkan.', 'error');
+                                btn.disabled = false;
+                                btn.textContent = 'Bayar Pelunasan Sekarang';
+                            },
+                            onClose: function () {
+                                sessionStorage.setItem('d25_last_settlement', JSON.stringify(paymentState));
+                                btn.disabled = false;
+                                btn.textContent = 'Bayar Pelunasan Sekarang';
+                                window.location.href = `/lacak-pesanan?no=${orderNumber}`;
+                            }
+                        });
+                    } else if (result.redirectUrl) {
+                        sessionStorage.removeItem('d25_last_settlement');
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        sessionStorage.removeItem('d25_last_settlement');
+                        showToast('Silakan hubungi admin untuk menyelesaikan pelunasan.', 'warning');
+                    }
+                } catch (err) {
+                    sessionStorage.removeItem('d25_last_settlement');
+                    showToast('Terjadi kesalahan: ' + err.message, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Bayar Pelunasan Sekarang';
+                }
+            }
+
+            function getBaseDueAmount() {
+                const infoDiv = document.getElementById('order-info');
+                if (!infoDiv) return { baseAmount: 0, labelPrefix: 'Bayar Sekarang ? ' };
+
+                const isPO = infoDiv.dataset.isPo === 'true';
+                const dpAmt = parseFloat(infoDiv.dataset.dpAmt || '0');
+                const remainingAmt = parseFloat(infoDiv.dataset.remainingAmt || '0');
+                const isPaidFull = infoDiv.dataset.isPaidFull === 'true';
+                const isDPPaid = infoDiv.dataset.isDpPaid === 'true';
+                const total = parseFloat(infoDiv.dataset.total || '0');
+
+                if (isPO && !isPaidFull) {
+                    const baseAmount = isDPPaid ? remainingAmt : dpAmt;
+                    return {
+                        baseAmount,
+                        labelPrefix: isDPPaid ? 'Bayar Pelunasan Sekarang ? ' : 'Bayar DP Sekarang ? ',
+                        amountType: isDPPaid ? 'remaining' : 'dp'
+                    };
+                }
+
+                if (!isPO && !isPaidFull) {
+                    return {
+                        baseAmount: total,
+                        labelPrefix: 'Bayar Sekarang ? ',
+                        amountType: 'total'
+                    };
+                }
+
+                return { baseAmount: 0, labelPrefix: 'Bayar Sekarang ? ', amountType: 'none' };
+            }
+
+            function getMethodFee(baseAmount, methodKey) {
+                const methodConfig = paymentFees?.[methodKey] || null;
+                if (!methodConfig) return 0;
+                if (methodConfig.type === 'flat') {
+                    return Number(methodConfig.value || 0);
+                }
+                const pct = Number(methodConfig.value || 0);
+                return Math.round(baseAmount * (pct / 100));
+            }
+
+            function getSavedSettlementState(orderNumber) {
+                try {
+                    const raw = sessionStorage.getItem('d25_last_settlement');
+                    if (!raw) return null;
+                    const parsed = JSON.parse(raw);
+                    if (!parsed || parsed.orderNumber !== orderNumber) return null;
+                    return parsed;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function updateSettlementButton() {
+                const btn = document.getElementById('btn-pay-settlement');
+                if (!btn) return;
+
+                const methodKey = paymentMethodKey || 'bank_bca';
+                const baseDue = getBaseDueAmount();
+                const fee = getMethodFee(baseDue.baseAmount, methodKey);
+                const finalAmount = baseDue.baseAmount + fee;
+                const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(finalAmount);
+
+                const dueText = document.getElementById('settlement-due-value');
+                const dueLabel = document.getElementById('settlement-due-label');
+
+                if (dueText) {
+                    dueText.textContent = formatted;
+                }
+                if (dueLabel) {
+                    dueLabel.textContent = baseDue.amountType === 'remaining'
+                        ? 'Total Tagihan Saat Ini (Sisa + Bea Admin)'
+                        : (baseDue.amountType === 'total'
+                            ? 'Total Tagihan Saat Ini (Harga Barang + Bea Admin)'
+                            : 'Total Tagihan Saat Ini (DP + Bea Admin)');
+                }
+
+                const svgElement = btn.querySelector('svg');
+                btn.innerHTML = (svgElement ? svgElement.outerHTML : '') + ' ' + baseDue.labelPrefix + formatted;
+                btn.dataset.amountDue = String(finalAmount);
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const settleBtn = document.getElementById('btn-pay-settlement');
+                if (settleBtn) {
+                    settleBtn.addEventListener('click', function () {
+                        paySettlement(settleBtn.dataset.orderNumber || '');
+                    });
+                }
+                updateSettlementButton();
+            });
+        </script> <%- include('partials/footer.ejs') %> </body>
+
+</html>

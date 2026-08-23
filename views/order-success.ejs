@@ -291,7 +291,7 @@
                             btn.style.color = '#0369a1';
                         }, 2500);
                     }).catch(() => {
-                        alert('Nomor pesanan: ' + num);
+                        showToast('Nomor pesanan: ' + num, 'info');
                     });
                 }
 
@@ -358,17 +358,17 @@
                         window.snap.pay(result.snapToken, {
                             onSuccess: function () {
                                 sessionStorage.removeItem('d25_last_settlement');
-                                alert('🎉 Pembayaran berhasil!');
+                                showToast('🎉 Pembayaran berhasil!', 'success');
                                 window.location.href = `/lacak-pesanan?no=${orderNumber}`;
                             },
                             onPending: function () {
                                 sessionStorage.removeItem('d25_last_settlement');
-                                alert('Menunggu pembayaran diselesaikan.');
+                                showToast('Menunggu pembayaran diselesaikan.', 'info');
                                 window.location.href = `/lacak-pesanan?no=${orderNumber}&status=pending`;
                             },
                             onError: function () {
                                 sessionStorage.removeItem('d25_last_settlement');
-                                alert('Pembayaran gagal atau dibatalkan.');
+                                showToast('Pembayaran gagal atau dibatalkan.', 'error');
                                 btn.disabled = false;
                                 btn.textContent = 'Bayar Sekarang';
                             },
@@ -390,7 +390,7 @@
                 }
             } catch (e) {
                     sessionStorage.removeItem('d25_last_settlement');
-                    alert('Error: ' + e.message);
+                    showToast('Terjadi kesalahan: ' + e.message, 'error');
                     btn.disabled = false;
                     btn.textContent = 'Bayar Sekarang';
                 }

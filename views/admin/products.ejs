@@ -278,7 +278,7 @@
                         modal.style.display = 'flex';
                     }
                 } catch (e) {
-                    alert('Gagal memuat data produk: ' + e.message);
+                    showToast('Gagal memuat data produk: ' + e.message, 'error');
                 }
             });
         });
@@ -320,10 +320,10 @@
                     closeProductModal();
                     location.reload();
                 } else {
-                    alert('Gagal: ' + (result.message || 'Terjadi kesalahan'));
+                    showToast('Gagal: ' + (result.message || 'Terjadi kesalahan'), 'error');
                 }
             } catch (e) {
-                alert('Gagal menyimpan: ' + e.message);
+                showToast('Gagal menyimpan: ' + e.message, 'error');
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = id ? 'Perbarui Produk' : 'Simpan Produk';
@@ -347,10 +347,10 @@
                     if (response.ok) {
                         row.remove();
                     } else {
-                        alert('Gagal menghapus produk');
+                        showToast('Gagal menghapus produk', 'error');
                     }
                 } catch (e) {
-                    alert('Error: ' + e.message);
+                    showToast('Terjadi kesalahan: ' + e.message, 'error');
                 }
             });
         });
