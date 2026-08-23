@@ -1,4 +1,8 @@
-const { supabaseAdmin } = require('./supabase');
+const { getSupabaseAdmin } = require('./supabase');
+
+function db() {
+  return getSupabaseAdmin();
+}
 
 function formatRupiah(angka) {
   return 'Rp ' + Number(angka).toLocaleString('id-ID');
@@ -44,7 +48,7 @@ const productService = {
   },
 
   async getAll(filters = {}) {
-    let query = supabaseAdmin
+    let query = db()
       .from('products')
       .select('*')
       .eq('active', true)
@@ -66,7 +70,7 @@ const productService = {
   },
 
   async getById(id) {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db()
       .from('products')
       .select('*')
       .eq('id', id)
@@ -78,7 +82,7 @@ const productService = {
   },
 
   async getCategories() {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db()
       .from('categories')
       .select('*')
       .eq('active', true)
@@ -134,7 +138,7 @@ const cartService = {
     let cart;
     
     if (userId) {
-      const { data: existingCart } = await supabaseAdmin
+      const { data: existingCart } = await db()
         .from('carts')
         .select('*')
         .eq('user_id', userId)
@@ -143,7 +147,7 @@ const cartService = {
       if (existingCart) {
         cart = existingCart;
       } else {
-        const { data: newCart, error } = await supabaseAdmin
+        const { data: newCart, error } = await db()
           .from('carts')
           .insert([{ user_id: userId }])
           .select()
@@ -152,7 +156,7 @@ const cartService = {
         cart = newCart;
       }
     } else if (sessionId) {
-      const { data: existingCart } = await supabaseAdmin
+      const { data: existingCart } = await db()
         .from('carts')
         .select('*')
         .eq('session_id', sessionId)
@@ -162,7 +166,7 @@ const cartService = {
       if (existingCart) {
         cart = existingCart;
       } else {
-        const { data: newCart, error } = await supabaseAdmin
+        const { data: newCart, error } = await db()
           .from('carts')
           .insert([{ session_id: sessionId }])
           .select()
@@ -176,7 +180,7 @@ const cartService = {
   },
 
   async getCartWithItems(cartId) {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db()
       .from('cart_items')
       .select(`
         *,
@@ -199,7 +203,7 @@ const cartService = {
     const normalizedSize = typeof size === 'string' ? size.trim() || null : size || null;
     const normalizedSizePrice = Number(sizePrice) || 0;
 
-    let matchingQuery = supabaseAdmin
+    let matchingQuery = db()
       .from('cart_items')
       .select('*')
       .eq('cart_id', cartId)
@@ -215,7 +219,7 @@ const cartService = {
 
     if (existing) {
       const newQuantity = Math.min(existing.quantity + quantity, 10);
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db()
         .from('cart_items')
         .update({ quantity: newQuantity, size_price: normalizedSizePrice, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
@@ -227,7 +231,7 @@ const cartService = {
       const insertPayload = { cart_id: cartId, product_id: productId, quantity, size_price: normalizedSizePrice };
       if (normalizedSize) insertPayload.size = normalizedSize;
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db()
         .from('cart_items')
         .insert([insertPayload])
         .select()
@@ -239,7 +243,7 @@ const cartService = {
 
   async updateQuantity(cartId, productId, quantity, size = null) {
     const normalizedSize = typeof size === 'string' ? size.trim() || null : size || null;
-    let query = supabaseAdmin
+    let query = db()
       .from('cart_items')
       .update({ quantity: Math.min(Math.max(quantity, 1), 10), updated_at: new Date().toISOString() })
       .eq('cart_id', cartId)
@@ -259,7 +263,7 @@ const cartService = {
 
   async removeItem(cartId, productId, size = null) {
     const normalizedSize = typeof size === 'string' ? size.trim() || null : size || null;
-    let query = supabaseAdmin.from('cart_items').delete().eq('cart_id', cartId).eq('product_id', productId);
+    let query = db().from('cart_items').delete().eq('cart_id', cartId).eq('product_id', productId);
 
     if (normalizedSize) {
       query = query.eq('size', normalizedSize);
@@ -274,7 +278,7 @@ const cartService = {
   },
 
   async clearCart(cartId) {
-    const { error } = await supabaseAdmin
+    const { error } = await db()
       .from('cart_items')
       .delete()
       .eq('cart_id', cartId);
@@ -289,7 +293,7 @@ const cartService = {
 // =====================================================
 const orderService = {
   async createFromCart(cartId, orderData) {
-    const { data: cartItems, error: cartError } = await supabaseAdmin
+    const { data: cartItems, error: cartError } = await db()
       .from('cart_items')
       .select(`
         *,
@@ -311,7 +315,7 @@ const orderService = {
 
     const orderNumber = 'D25-' + Date.now().toString().slice(-8).toUpperCase();
 
-    const { data: order, error: orderError } = await supabaseAdmin
+    const { data: order, error: orderError } = await db()
       .from('orders')
       .insert([{
         order_number: orderNumber,
@@ -353,15 +357,15 @@ const orderService = {
       };
     });
 
-    const { error: itemsError } = await supabaseAdmin
+    const { error: itemsError } = await db()
       .from('order_items')
       .insert(orderItems);
 
     if (itemsError) throw itemsError;
 
-    await supabaseAdmin.from('cart_items').delete().eq('cart_id', cartId);
+    await db().from('cart_items').delete().eq('cart_id', cartId);
 
-    const { data: fullOrder } = await supabaseAdmin
+    const { data: fullOrder } = await db()
       .from('orders')
       .select(`
         *,
@@ -374,7 +378,7 @@ const orderService = {
   },
 
   async getById(id) {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db()
       .from('orders')
       .select(`
         *,
@@ -388,7 +392,7 @@ const orderService = {
   },
 
   async getByOrderNumber(orderNumber) {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db()
       .from('orders')
       .select(`
         *,
@@ -402,7 +406,7 @@ const orderService = {
   },
 
   async getAll(filters = {}) {
-    let query = supabaseAdmin
+    let query = db()
       .from('orders')
       .select(`
         *,
@@ -441,7 +445,7 @@ const orderService = {
       }
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db()
       .from('orders')
       .update(updates)
       .eq('id', id)
@@ -453,7 +457,7 @@ const orderService = {
   },
 
   async getStats() {
-    const { data: orders } = await supabaseAdmin
+    const { data: orders } = await db()
       .from('orders')
       .select('status, payment_status, total, created_at');
 
@@ -465,7 +469,7 @@ const orderService = {
       totalProducts: 0
     };
 
-    const { data: products } = await supabaseAdmin
+    const { data: products } = await db()
       .from('products')
       .select('id', { count: 'exact' })
       .eq('active', true);

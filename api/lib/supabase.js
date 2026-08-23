@@ -1,19 +1,38 @@
-require('dotenv').config();
+// Supabase Client Configuration - Lazy initialization for serverless
+let _supabase = null;
+let _supabaseAdmin = null;
 
-const { createClient } = require('@supabase/supabase-js');
+function getSupabase() {
+  if (!_supabase) {
+    require('dotenv').config();
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn('⚠️  Supabase credentials not found in .env file');
+      console.warn('   Please configure SUPABASE_URL and SUPABASE_ANON_KEY');
+    }
 
-const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
+    _supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const supabaseAdmin = supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
-  : supabase;
+    if (supabaseServiceKey) {
+      _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+    } else {
+      _supabaseAdmin = _supabase;
+    }
+  }
+  return _supabase;
+}
 
-module.exports = { supabase, supabaseAdmin };
+function getSupabaseAdmin() {
+  if (!_supabaseAdmin) {
+    getSupabase();
+  }
+  return _supabaseAdmin;
+}
+
+module.exports = { getSupabase, getSupabaseAdmin };

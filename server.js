@@ -3,26 +3,37 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const helmet = require('helmet');
-const { createClient } = require('@supabase/supabase-js');
 const { productService, cartService, orderService, settingsService, authService } = require('./lib/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Supabase client for auth
+// Supabase config (env vars only, fast)
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
 
-// Admin client for bypassing RLS
-const supabaseAdmin = supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey, {
+// Lazy Supabase clients
+let _supabase = null;
+let _supabaseAdmin = null;
+
+function getSupabase() {
+  if (!_supabase && supabaseUrl && supabaseAnonKey) {
+    const { createClient } = require('@supabase/supabase-js');
+    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return _supabase;
+}
+
+function getSupabaseAdmin() {
+  if (!_supabaseAdmin && supabaseUrl && supabaseServiceKey) {
+    const { createClient } = require('@supabase/supabase-js');
+    _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false }
-    })
-  : supabase; // fallback to anon if no service key
+    });
+  }
+  return _supabaseAdmin || getSupabase();
+}
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -86,6 +97,14 @@ function formatRupiah(angka) {
   return 'Rp ' + Number(angka).toLocaleString('id-ID');
 }
 
+// Utility function to add timeout to promises
+function timeoutPromise(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+  ]);
+}
+
 async function getSizePricingConfig() {
   try {
     const { settingsService } = require('./lib/db');
@@ -139,7 +158,7 @@ async function getCartData(req) {
 
 app.get('/api/health', async (req, res) => {
   try {
-    const { data, error } = await supabaseAdmin.from('products').select('id').limit(1);
+    const { data, error } = await getSupabaseAdmin().from('products').select('id').limit(1);
     if (error) throw error;
     return res.json({
       status: 'healthy',
@@ -451,7 +470,7 @@ app.post('/checkout', async (req, res) => {
     // Create Midtrans Snap transaction (charges DP amount for Pre-Order, or Full amount for regular)
     try {
       const snapPayload = buildSnapPayload(order);
-      const snapResponse = await midtrans.createSnapTransaction(snapPayload);
+const snapResponse = await timeoutPromise(midtrans.createSnapTransaction(snapPayload), 10000);
       
       order.paymentToken = snapResponse.token;
       order.paymentRedirectUrl = snapResponse.redirect_url;
@@ -526,7 +545,7 @@ app.post('/payment/midtrans-notification', async (req, res) => {
   try {
     console.log('Midtrans Notification received:', req.body);
     
-    const notification = await midtrans.core.transactions.notification(req.body);
+    const notification = await timeoutPromise(midtrans.core.transactions.notification(req.body), 10000);
     
     const { 
       order_id,
@@ -546,9 +565,8 @@ app.post('/payment/midtrans-notification', async (req, res) => {
     const baseOrderNumber = order_id.replace(/-(?:DP|LUNAS)(?:-\d+)?$/i, '');
     const isSettlement = /-LUNAS(?:-\d+)?$/i.test(order_id);
 
-    const { supabaseAdmin } = require('./lib/supabase');
-    const adminDb = supabaseAdmin || require('./lib/db').db;
-    
+const adminDb = getSupabaseAdmin();
+     
     const { data: order } = await adminDb
       .from('orders')
       .select('*')
@@ -655,6 +673,7 @@ app.post('/login', async (req, res) => {
     return res.redirect('/admin');
   }
 
+  const supabase = getSupabase();
   if (!supabase) {
     return res.render('login', { error: 'Supabase tidak dikonfigurasi. Gunakan admin/d25tkp2026', cartCount, formatRupiah, currentPage: 'login' });
   }
@@ -700,6 +719,7 @@ app.post('/register', async (req, res) => {
   const { name, email, password, phone, institution } = req.body;
   const { cartCount } = await getCartData(req);
   
+  const supabase = getSupabase();
   if (!supabase) {
     return res.render('register', { error: 'Supabase tidak dikonfigurasi', cartCount, formatRupiah, currentPage: 'register' });
   }
@@ -743,6 +763,7 @@ app.post('/register', async (req, res) => {
 
 // Logout
 app.get('/logout', async (req, res) => {
+  const supabase = getSupabase();
   if (supabase && req.session.user?.id) {
     await supabase.auth.signOut();
   }
@@ -850,8 +871,7 @@ app.get('/admin/analytics', async (req, res) => {
   try {
     const stats = await orderService.getStats();
     // Get recent orders for charts
-    const { supabaseAdmin } = require('./lib/supabase');
-    const adminDb = supabaseAdmin || require('./lib/db').db;
+    const adminDb = getSupabaseAdmin();
     
     const { data: recentOrders } = await adminDb
       .from('orders')
@@ -1195,7 +1215,7 @@ app.post('/api/orders/:orderNumber/pelunasan', async (req, res) => {
       snapPayload.enabled_payments = [paymentMethodConfig.snapType];
     }
 
-    const snapResponse = await midtrans.createSnapTransaction(snapPayload);
+    const snapResponse = await timeoutPromise(midtrans.createSnapTransaction(snapPayload), 10000);
 
     return res.json({
       success: true,
