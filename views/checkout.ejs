@@ -974,6 +974,10 @@
         const poEnabled = <%= (typeof poEnabled !== 'undefined' && poEnabled) ? 'true' : 'false' %>;
         const poDpPercentage = <%= (typeof poSettings !== 'undefined' && poSettings.dpPercentage) ? Number(poSettings.dpPercentage) : 50 %>;
 
+        // Coupon handling - must be declared before updateFee()
+        let appliedCouponCode = null;
+        let appliedDiscountAmount = 0;
+
         function updateFee() {
             console.log('[updateFee] called');
             const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
@@ -1071,9 +1075,6 @@
         updateFee();
 
         // Coupon handling
-        let appliedCouponCode = null;
-        let appliedDiscountAmount = 0;
-
         async function applyCoupon() {
             const input = document.getElementById('coupon-input');
             const code = input.value.trim().toUpperCase();
