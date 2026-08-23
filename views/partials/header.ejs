@@ -1,18 +1,28 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'D25 Teknologi Pendidikan' %> | Universitas Negeri Malang</title>
-    <link rel="stylesheet" href="/css/style.css?v=2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#002B5C">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="D25">
+    <title>
+        <%= typeof title !=='undefined' ? title : 'D25 Teknologi Pendidikan' %> | Universitas Negeri Malang
+    </title>
+    <link rel="stylesheet" href="/css/style.css?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎓%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎓%3C/text%3E%3C/svg%3E">
 </head>
+
 <body>
     <header>
+        <!-- Desktop Top Bar -->
         <div class="header-top">
             <div class="container">
                 <div style="display: flex; gap: 24px; flex-wrap: wrap;">
@@ -27,7 +37,9 @@
                 </div>
             </div>
         </div>
-        <div class="header-main">
+
+        <!-- Desktop Header -->
+        <div class="header-main desktop-header">
             <div class="container header-content">
                 <a href="/" class="logo" aria-label="D25 Teknologi Pendidikan - Beranda">
                     <div class="logo-badge">D25</div>
@@ -36,32 +48,85 @@
                         <p>Program Studi Teknologi Pendidikan, Fakultas Ilmu Pendidikan, UM</p>
                     </div>
                 </a>
-                <button class="mobile-menu-btn" aria-label="Buka Menu" id="mobileMenuBtn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
                 <nav aria-label="Navigasi utama">
                     <ul>
-                        <li><a href="/" <% if (typeof currentPage !== 'undefined' && currentPage === 'home') { %>class="active"<% } %>>Beranda</a></li>
-                        <li><a href="/products" <% if (typeof currentPage !== 'undefined' && currentPage === 'products') { %>class="active"<% } %>>Produk</a></li>
-                        <li><a href="/cart" class="cart-link" <% if (typeof currentPage !== 'undefined' && currentPage === 'cart') { %>class="active"<% } %>>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                            Keranjang
-                            <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-                                <span class="cart-count"><%= cartCount %></span>
-                            <% } %>
-                        </a></li>
-                        <li><a href="/lacak-pesanan" <% if (typeof currentPage !== 'undefined' && currentPage === 'tracking') { %>class="active"<% } %>>🔍 Lacak Pesanan</a></li>
-                        <% if (typeof user !== 'undefined' && user) { %>
-                            <li><a href="/admin" <% if (typeof currentPage !== 'undefined' && currentPage === 'admin') { %>class="active"<% } %>>Admin</a></li>
+                        <li><a href="/" <% if (typeof currentPage !=='undefined' && currentPage==='home' ) {
+                                %>class="active"<% } %>>Beranda</a></li>
+                        <li><a href="/products" <% if (typeof currentPage !=='undefined' && currentPage==='products' ) {
+                                %>class="active"<% } %>>Produk</a></li>
+                        <li><a href="/cart" class="cart-link" <% if (typeof currentPage !=='undefined' &&
+                                currentPage==='cart' ) { %>class="active"<% } %>>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="9" cy="21" r="1"></circle>
+                                        <circle cx="20" cy="21" r="1"></circle>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6">
+                                        </path>
+                                    </svg>
+                                    Keranjang
+                                    <% if (typeof cartCount !=='undefined' && cartCount> 0) { %>
+                                        <span class="cart-count">
+                                            <%= cartCount %>
+                                        </span>
+                                        <% } %>
+                            </a></li>
+                        <li><a href="/lacak-pesanan" <% if (typeof currentPage !=='undefined' &&
+                                currentPage==='tracking' ) { %>class="active"<% } %>>🔍 Lacak Pesanan</a></li>
+                        <% if (typeof user !=='undefined' && user) { %>
+                            <li><a href="/admin" <% if (typeof currentPage !=='undefined' && currentPage==='admin' ) {
+                                    %>class="active"<% } %>>Admin</a></li>
                             <li><a href="/logout">Logout</a></li>
-                        <% } else { %>
-                            <li><a href="/login" <% if (typeof currentPage !== 'undefined' && currentPage === 'login') { %>class="active"<% } %>>Login</a></li>
-                        <% } %>
+                            <% } else { %>
+                                <li><a href="/login" <% if (typeof currentPage !=='undefined' && currentPage==='login' )
+                                        { %>class="active"<% } %>>Login</a></li>
+                                <% } %>
                     </ul>
                 </nav>
             </div>
         </div>
-        
+
+        <!-- Mobile App Bar -->
+        <div class="mobile-appbar">
+            <div class="mobile-appbar-inner">
+                <a href="/" class="mobile-appbar-home" aria-label="Beranda">
+                    <div class="mobile-appbar-logo">D25</div>
+                </a>
+                <div class="mobile-appbar-title">
+                    <span class="mobile-appbar-title-text">
+                        <% const pageTitles={ home: 'Beranda' , products: 'Katalog' , 'product-detail' : 'Detail Produk'
+                            , cart: 'Keranjang' , checkout: 'Checkout' , tracking: 'Lacak Pesanan' , login: 'Masuk' ,
+                            register: 'Daftar' , 'order-success' : 'Pesanan Sukses' , admin: 'Admin' }; const
+                            currentTitle=(typeof currentPage !=='undefined' && pageTitles[currentPage]) ?
+                            pageTitles[currentPage] : 'D25' ; %>
+                            <%= currentTitle %>
+                    </span>
+                </div>
+                <div class="mobile-appbar-actions">
+                    <a href="/cart" class="mobile-appbar-icon cart-link" aria-label="Keranjang">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <% if (typeof cartCount !=='undefined' && cartCount> 0) { %>
+                            <span class="cart-count appbar-cart-badge <%= cartCount > 9 ? 'large' : '' %>">
+                                <%= cartCount> 9 ? '9+' : cartCount %>
+                            </span>
+                            <% } %>
+                    </a>
+                    <button class="mobile-menu-btn" aria-label="Buka Menu" id="mobileMenuBtn">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Mobile Navigation Drawer -->
         <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
         <div class="mobile-nav-drawer" id="mobileNavDrawer">
@@ -74,57 +139,102 @@
                     </div>
                 </div>
                 <button class="mobile-nav-close" id="mobileNavCloseBtn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <ul class="mobile-nav-list">
                 <li class="mobile-nav-item">
-                    <a href="/" class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'home') { %>active<% } %>">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <a href="/"
+                        class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'home') { %>active<% } %>">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
                         <span>Beranda</span>
                     </a>
                 </li>
                 <li class="mobile-nav-item">
-                    <a href="/products" class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'products') { %>active<% } %>">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <a href="/products"
+                        class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && (currentPage === 'products' || currentPage === 'product-detail')) { %>active<% } %>">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
                         <span>Katalog</span>
                     </a>
                 </li>
                 <li class="mobile-nav-item">
-                    <a href="/cart" class="mobile-nav-link cart-link <% if (typeof currentPage !== 'undefined' && currentPage === 'cart') { %>active<% } %>">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <a href="/cart"
+                        class="mobile-nav-link cart-link <% if (typeof currentPage !== 'undefined' && currentPage === 'cart') { %>active<% } %>">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
                         <span>Keranjang</span>
-                        <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-                            <span class="cart-count"><%= cartCount %></span>
-                        <% } %>
+                        <% if (typeof cartCount !=='undefined' && cartCount> 0) { %>
+                            <span class="cart-count">
+                                <%= cartCount %>
+                            </span>
+                            <% } %>
                     </a>
                 </li>
                 <li class="mobile-nav-item">
-                    <a href="/lacak-pesanan" class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'tracking') { %>active<% } %>">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <a href="/lacak-pesanan"
+                        class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'tracking') { %>active<% } %>">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
                         <span>Lacak</span>
                     </a>
                 </li>
-                <li class="mobile-nav-item">
-                    <a href="/login" class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'login') { %>active<% } %>">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <span>Masuk</span>
-                    </a>
-                </li>
-                <% if (typeof user !== 'undefined' && user) { %>
+                <% if (typeof user !=='undefined' && user) { %>
                     <li class="mobile-nav-item">
-                        <a href="/admin" class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'admin') { %>active<% } %>">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4-4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <a href="/admin"
+                            class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'admin') { %>active<% } %>">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4-4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
                             <span>Admin</span>
                         </a>
                     </li>
                     <li class="mobile-nav-item">
                         <a href="/logout" class="mobile-nav-link">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5l5-5 5 5H9z"></path></svg>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
                             <span>Logout</span>
                         </a>
                     </li>
-                <% } %>
+                    <% } else { %>
+                        <li class="mobile-nav-item">
+                            <a href="/login"
+                                class="mobile-nav-link <% if (typeof currentPage !== 'undefined' && currentPage === 'login') { %>active<% } %>">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span>Masuk</span>
+                            </a>
+                        </li>
+                        <% } %>
             </ul>
             <div class="mobile-nav-footer">
                 <p style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-top: 16px;">
@@ -132,39 +242,86 @@
                 </p>
             </div>
         </div>
-        
-        <!-- Mobile Bottom Navigation -->
+
+        <!-- Mobile Bottom Navigation (Native App Tab Bar) -->
         <nav class="bottom-nav" aria-label="Navigasi Bawah">
-            <a href="/" <% if (typeof currentPage !== 'undefined' && currentPage === 'home') { %>class="active"<% } %>>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                <span>Beranda</span>
+            <a href="/"
+                class="bottom-nav-item <% if (typeof currentPage !== 'undefined' && currentPage === 'home') { %>active<% } %>">
+                <span class="bottom-nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </span>
+                <span class="bottom-nav-label">Beranda</span>
             </a>
-            <a href="/products" <% if (typeof currentPage !== 'undefined' && currentPage === 'products') { %>class="active"<% } %>>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                <span>Katalog</span>
+            <a href="/products"
+                class="bottom-nav-item <% if (typeof currentPage !== 'undefined' && (currentPage === 'products' || currentPage === 'product-detail')) { %>active<% } %>">
+                <span class="bottom-nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                </span>
+                <span class="bottom-nav-label">Katalog</span>
             </a>
-            <a href="/cart" class="cart-link <% if (typeof currentPage !== 'undefined' && currentPage === 'cart') { %>active<% } %>">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                <span>Keranjang</span>
-                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-                    <span class="cart-count"><%= cartCount %></span>
-                <% } %>
+            <a href="/cart"
+                class="bottom-nav-item cart-link <% if (typeof currentPage !== 'undefined' && currentPage === 'cart') { %>active<% } %>">
+                <span class="bottom-nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <% if (typeof cartCount !=='undefined' && cartCount> 0) { %>
+                        <span class="cart-count bottom-nav-cart-badge <%= cartCount > 9 ? 'large' : '' %>">
+                            <%= cartCount> 9 ? '9+' : cartCount %>
+                        </span>
+                        <% } %>
+                </span>
+                <span class="bottom-nav-label">Keranjang</span>
             </a>
-            <a href="/lacak-pesanan" <% if (typeof currentPage !== 'undefined' && currentPage === 'tracking') { %>class="active"<% } %>>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <span>Lacak</span>
+            <a href="/lacak-pesanan"
+                class="bottom-nav-item <% if (typeof currentPage !== 'undefined' && currentPage === 'tracking') { %>active<% } %>">
+                <span class="bottom-nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <span class="bottom-nav-label">Lacak</span>
             </a>
-            <% if (typeof user !== 'undefined' && user) { %>
-                <a href="/admin" <% if (typeof currentPage !== 'undefined' && currentPage === 'admin') { %>class="active"<% } %>>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4-4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span>Akun</span>
+            <% if (typeof user !=='undefined' && user) { %>
+                <a href="/admin"
+                    class="bottom-nav-item <% if (typeof currentPage !== 'undefined' && currentPage === 'admin') { %>active<% } %>">
+                    <span class="bottom-nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4-4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </span>
+                    <span class="bottom-nav-label">Akun</span>
                 </a>
-            <% } else { %>
-                <a href="/login" <% if (typeof currentPage !== 'undefined' && currentPage === 'login') { %>class="active"<% } %>>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4-4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span>Masuk</span>
-                </a>
-            <% } %>
+                <% } else { %>
+                    <a href="/login"
+                        class="bottom-nav-item <% if (typeof currentPage !== 'undefined' && currentPage === 'login') { %>active<% } %>">
+                        <span class="bottom-nav-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                        <span class="bottom-nav-label">Masuk</span>
+                    </a>
+                    <% } %>
         </nav>
     </header>
     <main>
