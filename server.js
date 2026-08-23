@@ -387,10 +387,44 @@ async function getCouponsFromDB() {
   return { ...DEFAULT_COUPONS };
 }
 
-function calculateDiscount(couponCode, subtotal, coupons) {
+async function incrementCouponUsage(code) {
+  try {
+    const { settingsService } = require('./lib/db');
+    const coupons = await getCouponsFromDB();
+    const upperCode = code.toUpperCase().trim();
+    if (coupons[upperCode]) {
+      coupons[upperCode].usedCount = (coupons[upperCode].usedCount || 0) + 1;
+      await settingsService.set('coupons', JSON.stringify(coupons), 'Daftar kupon diskon');
+    }
+  } catch (e) {
+    console.error('Failed to increment coupon usage:', e);
+  }
+}
+
+function calculateDiscount(couponCode, subtotal, coupons, userId = null) {
   const code = (couponCode || '').toUpperCase().trim();
   const coupon = (coupons || {})[code];
   if (!coupon || !coupon.active) return { valid: false, message: 'Kode kupon tidak valid atau sudah tidak berlaku.' };
+  
+  // Check expiration
+  if (coupon.validUntil) {
+    const expiry = new Date(coupon.validUntil);
+    if (isNaN(expiry.getTime()) || expiry < new Date()) {
+      return { valid: false, message: 'Kupon sudah kadaluarsa.' };
+    }
+  }
+  
+  // Check max total uses
+  if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
+    return { valid: false, message: 'Kupon sudah mencapai batas penggunaan maksimal.' };
+  }
+  
+  // Check max uses per user
+  if (userId && coupon.maxUsesPerUser) {
+    // Would need to check order history for this user + coupon
+    // For now just track in session or skip if not implemented
+  }
+  
   if (subtotal < coupon.minOrder) return { valid: false, message: `Minimal belanja ${formatRupiah(coupon.minOrder)} untuk menggunakan kupon ini.` };
 
   let discount = 0;
@@ -520,7 +554,7 @@ app.post('/checkout', async (req, res) => {
     let appliedCoupon = null;
     if (coupon_code) {
       const coupons = await getCouponsFromDB();
-      const couponResult = calculateDiscount(coupon_code, subtotal, coupons);
+      const couponResult = calculateDiscount(coupon_code, subtotal, coupons, req.session.user?.id || null);
       if (couponResult.valid) {
         discountAmount = couponResult.discount;
         appliedCoupon = couponResult.code;
@@ -553,6 +587,11 @@ app.post('/checkout', async (req, res) => {
       isPreorder, dpPercentage,
       discountAmount
     });
+
+    // Increment coupon usage count
+    if (appliedCoupon) {
+      await incrementCouponUsage(appliedCoupon);
+    }
 
     // Ensure PO and fee fields are attached to order in memory for Snap payload builder
     order.is_preorder = isPreorder;
@@ -1212,6 +1251,10 @@ app.post('/admin/settings/coupons', async (req, res) => {
           value: parseFloat(req.body[`coupon_value_${codeKey}`]) || 0,
           minOrder: parseFloat(req.body[`coupon_min_${codeKey}`]) || 0,
           maxDiscount: parseFloat(req.body[`coupon_max_${codeKey}`]) || 0,
+          validUntil: req.body[`coupon_valid_${codeKey}`] || null,
+          maxUses: parseInt(req.body[`coupon_maxuses_${codeKey}`]) || 0,
+          maxUsesPerUser: parseInt(req.body[`coupon_maxuser_${codeKey}`]) || 0,
+          usedCount: parseInt(req.body[`coupon_used_${codeKey}`]) || 0,
           description: req.body[`coupon_desc_${codeKey}`] || '',
           active: req.body[`coupon_active_${codeKey}`] === '1'
         };
@@ -1230,7 +1273,7 @@ app.post('/admin/settings/coupons/add', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).redirect('/login');
   try {
     const { settingsService } = require('./lib/db');
-    const { code, type, value, minOrder, maxDiscount, description, active } = req.body;
+    const { code, type, value, minOrder, maxDiscount, validUntil, maxUses, maxUsesPerUser, description, active } = req.body;
     if (!code || !type || !value) {
       return res.redirect('/admin/settings?error=Kode, tipe, dan nilai kupon wajib diisi');
     }
@@ -1245,6 +1288,10 @@ app.post('/admin/settings/coupons/add', async (req, res) => {
       value: parseFloat(value),
       minOrder: parseFloat(minOrder) || 0,
       maxDiscount: parseFloat(maxDiscount) || 0,
+      validUntil: validUntil || null,
+      maxUses: parseInt(maxUses) || 0,
+      maxUsesPerUser: parseInt(maxUsesPerUser) || 0,
+      usedCount: 0,
       description: description || '',
       active: active === '1'
     };

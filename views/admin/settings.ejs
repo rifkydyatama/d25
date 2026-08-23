@@ -208,7 +208,7 @@
                 </form>
             </section>
 
-            <!-- COUPON / DISCOUNT SETTINGS -->
+<!-- COUPON / DISCOUNT SETTINGS -->
             <section class="admin-section">
                 <div class="admin-section-header">
                     <h2>Manajemen Kupon & Diskon</h2>
@@ -225,6 +225,10 @@
                                 <th>Nilai</th>
                                 <th>Min. Belanja</th>
                                 <th>Max Diskon</th>
+                                <th>Kadaluarsa</th>
+                                <th>Max Pakai Total</th>
+                                <th>Max Pakai/User</th>
+                                <th>Terpakai</th>
                                 <th>Deskripsi</th>
                             </tr>
                         </thead>
@@ -257,12 +261,22 @@
                                     <input type="number" name="coupon_max_<%= key %>" value="<%= c.maxDiscount || 0 %>" step="1000" min="0" class="form-control" style="width:120px;" placeholder="0 = tidak ada batas">
                                 </td>
                                 <td>
+                                    <input type="date" name="coupon_valid_<%= key %>" value="<%= c.validUntil ? c.validUntil.split('T')[0] : '' %>" class="form-control" style="width:150px;">
+                                </td>
+                                <td>
+                                    <input type="number" name="coupon_maxuses_<%= key %>" value="<%= c.maxUses || 0 %>" min="0" class="form-control" style="width:100px;" placeholder="0 = unlimited">
+                                </td>
+                                <td>
+                                    <input type="number" name="coupon_maxuser_<%= key %>" value="<%= c.maxUsesPerUser || 0 %>" min="0" class="form-control" style="width:100px;" placeholder="0 = unlimited">
+                                </td>
+                                <td style="color:var(--text-secondary);font-weight:600;"><%= c.usedCount || 0 %></td>
+                                <td>
                                     <input type="text" name="coupon_desc_<%= key %>" value="<%= c.description || '' %>" class="form-control" placeholder="Deskripsi diskon">
                                 </td>
                             </tr>
                             <% }); %>
                         <% } else { %>
-                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:20px;">Belum ada kupon. Tambah kupon baru di bawah.</td></tr>
+                            <tr><td colspan="11" style="text-align:center;color:var(--text-secondary);padding:20px;">Belum ada kupon. Tambah kupon baru di bawah.</td></tr>
                         <% } %>
                         </tbody>
                     </table>
@@ -272,7 +286,7 @@
                         <span style="font-size:12px;color:var(--text-secondary);margin-left:12px;">Perubahan langsung berlaku di halaman checkout.</span>
                     </div>
                 </form>
-                
+
                 <!-- Add New Coupon -->
                 <form action="/admin/settings/coupons/add" method="POST" class="checkout-form-card" style="margin-top:20px;">
                     <h4 style="margin:0 0 12px;font-size:14px;color:var(--unm-navy);">➕ Tambah Kupon Baru</h4>
@@ -301,6 +315,20 @@
                         <div class="form-group">
                             <label for="new_coupon_max">Max Diskon</label>
                             <input type="number" id="new_coupon_max" name="maxDiscount" step="1000" min="0" class="form-control" value="0" placeholder="0 = tidak ada batas">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_coupon_valid">Kadaluarsa (Opsional)</label>
+                            <input type="date" id="new_coupon_valid" name="validUntil" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="new_coupon_maxuses">Max Pakai Total</label>
+                            <input type="number" id="new_coupon_maxuses" name="maxUses" min="0" class="form-control" value="0" placeholder="0 = unlimited">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_coupon_maxuser">Max Pakai per User</label>
+                            <input type="number" id="new_coupon_maxuser" name="maxUsesPerUser" min="0" class="form-control" value="0" placeholder="0 = unlimited">
                         </div>
                         <div class="form-group">
                             <label for="new_coupon_active">Status</label>
