@@ -1,5 +1,5 @@
 // Service Worker for D25 Teknologi Pendidikan PWA
-const CACHE_NAME = 'd25-tdp-cache-v1';
+const CACHE_NAME = 'd25-tdp-cache-v2';
 const urlsToCache = [
     '/',
     '/css/style.css',

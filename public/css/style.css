@@ -312,6 +312,7 @@ nav a.active::after {
 
     /* Mobile Navigation Drawer */
     .mobile-nav-drawer {
+        display: flex;
         position: fixed;
         top: 0;
         right: -100%;
@@ -331,6 +332,7 @@ nav a.active::after {
     }
 
     .mobile-nav-overlay {
+        display: block;
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.5);
@@ -2780,6 +2782,12 @@ footer {
 
 /* Mobile App Bar - hidden on desktop */
 .mobile-appbar {
+    display: none;
+}
+
+/* Mobile Nav Drawer & Overlay - hidden on desktop */
+.mobile-nav-drawer,
+.mobile-nav-overlay {
     display: none;
 }
 
