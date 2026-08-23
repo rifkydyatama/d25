@@ -2,141 +2,471 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title><%= product.name %> - D25 Teknologi Pendidikan</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Product Detail Mobile-First Enhancements */
+        .product-section { padding: 0; }
+        .product-container { max-width: 100%; padding: 0; }
+        
+        /* Gallery - swipeable */
+        .product-gallery {
+            position: relative;
+            background: #f5f5f5;
+        }
+        .product-main-image {
+            width: 100%;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+        }
+        .product-main-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .gallery-indicator {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+        .gallery-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .gallery-dot.active { background: #fff; }
+        
+        /* Info Card */
+        .product-info-card {
+            background: #fff;
+            padding: 20px 16px 100px; /* space for sticky bar */
+            position: relative;
+        }
+        
+        /* Category/Brand badges */
+        .product-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-category {
+            background: var(--unm-light-blue);
+            color: var(--unm-blue);
+        }
+        .badge-brand {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .badge-stock {
+            background: #f0fdf4;
+            color: #166534;
+        }
+        .badge-stock.out { background: #fef2f2; color: #991b1b; }
+        .badge-digital { background: #eef2ff; color: #3730a3; }
+        .badge-warranty { background: #fffbeb; color: #92400e; }
+        .badge-level { background: #fce7f3; color: #9d174d; }
+        
+        /* Title */
+        .product-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--unm-navy);
+            line-height: 1.3;
+            margin: 0 0 12px;
+            letter-spacing: -0.02em;
+        }
+        
+        /* Price - prominent */
+        .product-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .price-current {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--unm-navy);
+        }
+        .price-original {
+            font-size: 16px;
+            color: var(--text-secondary);
+            text-decoration: line-through;
+        }
+        .price-discount-badge {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        
+        /* Rating (placeholder) */
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .rating-stars { display: flex; gap: 2px; }
+        .rating-star { color: #e5e7eb; }
+        .rating-star.filled { color: #fbbf24; }
+        .rating-count { font-size: 13px; color: var(--text-secondary); }
+        
+        /* Description - collapsible */
+        .collapsible-section {
+            margin-bottom: 16px;
+        }
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .collapsible-header h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        .collapsible-icon {
+            width: 20px; height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .collapsible-section.open .collapsible-icon { transform: rotate(180deg); }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .collapsible-section.open .collapsible-content { max-height: 500px; padding-top: 12px; }
+        .description-text {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+        
+        /* Specs table */
+        .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .spec-table td { padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        .spec-table td:first-child { color: var(--text-secondary); font-weight: 500; width: 40%; }
+        .spec-table td:last-child { color: var(--text-primary); font-weight: 500; text-align: right; }
+        
+        /* Tags */
+        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .tag-chip {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        /* Size Selector - chip style */
+        .size-selector { margin-top: 20px; }
+        .size-selector label { display: block; font-weight: 700; margin-bottom: 10px; color: var(--text-primary); font-size: 14px; }
+        .size-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .size-chip {
+            flex: 0 0 calc(33.333% - 6px);
+            min-width: 70px;
+            padding: 14px 8px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: #fff;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .size-chip:active { transform: scale(0.98); }
+        .size-chip.selected {
+            border-color: var(--unm-blue);
+            background: #eff6ff;
+            color: var(--unm-blue);
+            box-shadow: 0 0 0 2px rgba(0,78,140,0.1);
+        }
+        .size-chip .size-price { font-size: 11px; font-weight: 600; opacity: 0.7; }
+        .size-chip.selected .size-price { color: var(--unm-blue); opacity: 1; }
+        
+        /* Quantity Selector - pill style */
+        .qty-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .qty-label { font-weight: 700; color: var(--text-primary); font-size: 14px; }
+        .qty-pill {
+            flex: 1;
+            max-width: 160px;
+            display: flex;
+            align-items: center;
+            background: #f3f4f6;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .qty-btn {
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent; border: none;
+            color: var(--text-primary); font-size: 20px; font-weight: 600;
+            cursor: pointer;
+        }
+        .qty-btn:active { background: #e5e7eb; }
+        .qty-input {
+            flex: 1; height: 44px;
+            border: none; background: transparent;
+            text-align: center; font-size: 16px; font-weight: 600;
+            color: var(--text-primary); -moz-appearance: textfield;
+        }
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* Features - check list */
+        .features-list {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .features-list h4 {
+            font-size: 14px; font-weight: 700;
+            color: var(--unm-navy);
+            margin-bottom: 12px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .feature-row {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 0;
+            font-size: 13px; color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .feature-row:last-child { border-bottom: none; }
+        .feature-icon {
+            width: 20px; height: 20px; flex-shrink: 0;
+            color: #16a34a; margin-top: 2px;
+        }
+        
+        /* Sticky Bottom Bar */
+        .sticky-cart-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-top: 1px solid var(--border-color);
+            padding: 12px 16px;
+            display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            z-index: 1000;
+            transform: translateY(100%);
+            animation: slideUp 0.3s ease forwards;
+        }
+        @keyframes slideUp { to { transform: translateY(0); } }
+        .sticky-price {
+            flex: 1;
+            text-align: right;
+        }
+        .sticky-price .label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .sticky-price .value { font-size: 20px; font-weight: 800; color: var(--unm-navy); }
+        .sticky-btn {
+            flex: 0 0 160px;
+            height: 48px;
+            border-radius: 12px;
+            font-size: 15px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        
+        /* Desktop adjustments */
+        @media (min-width: 769px) {
+            .product-section { padding: 32px 0; }
+            .product-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+            .product-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+            .product-gallery { position: sticky; top: 100px; }
+            .product-main-image { height: 500px; border-radius: 16px; border: 1px solid var(--border-color); }
+            .product-info-card { padding: 0; background: transparent; }
+            .sticky-cart-bar { display: none; }
+            .product-title { font-size: 32px; }
+            .price-current { font-size: 32px; }
+            .size-chips { gap: 10px; }
+            .size-chip { flex: 0 0 auto; min-width: 78px; padding: 12px 16px; }
+        }
+        
+        /* Safe area for bottom bar */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .sticky-cart-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+            .product-info-card { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+        }
+    </style>
 </head>
 <body>
     <%- include('partials/header.ejs', { currentPage: 'products' }) %>
 
-    <section class="page-header">
-        <div class="container">
-            <nav aria-label="Breadcrumb" style="margin-bottom: 16px;">
-                <ol style="display: flex; gap: 8px; list-style: none; font-size: 14px; color: var(--text-secondary); flex-wrap: wrap;">
-                    <li><a href="/" style="color: var(--text-secondary); text-decoration: none;">Beranda</a></li>
+    <section class="product-section">
+        <div class="product-container">
+            <nav aria-label="Breadcrumb" class="breadcrumb" style="padding: 16px; font-size: 13px; color: var(--text-secondary);">
+                <ol style="display: flex; gap: 8px; list-style: none; flex-wrap: wrap;">
+                    <li><a href="/" style="color: inherit; text-decoration: none;">Beranda</a></li>
                     <li aria-hidden="true">/</li>
-                    <li><a href="/products" style="color: var(--text-secondary); text-decoration: none;">Produk</a></li>
+                    <li><a href="/products" style="color: inherit; text-decoration: none;">Produk</a></li>
                     <li aria-hidden="true">/</li>
                     <li aria-current="page" style="color: var(--unm-blue);"><%= product.category %></li>
                 </ol>
             </nav>
-            <h1><%= product.name %></h1>
-        </div>
-    </section>
 
-    <section class="section">
-        <div class="container">
             <div class="product-detail">
+                <!-- Gallery -->
                 <div class="product-gallery">
                     <div class="product-main-image">
-                        <img src="<%= product.image || product.imageUrl || '/images/product-pdh.svg' %>" alt="<%= product.name %>" onerror="this.onerror=null; this.src='/images/placeholder-product.svg';">
+                        <img id="mainImage" src="<%= product.image || product.imageUrl || '/images/product-pdh.svg' %>" alt="<%= product.name %>" onerror="this.onerror=null; this.src='/images/placeholder-product.svg';">
+                    </div>
+                    <div class="gallery-indicator" id="galleryIndicator">
+                        <span class="gallery-dot active"></span>
                     </div>
                 </div>
-                <div class="product-detail-info">
-                    <span class="product-detail-category"><%= product.category %></span>
-                    <% if (product.brand) { %>
-                        <span class="product-brand"><%= product.brand %></span>
-                    <% } %>
-                    <div class="product-detail-header">
-                        <h1><%= product.name %></h1>
-                        <div class="product-detail-meta">
-                            <% if (product.sku) { %>
-                            <div class="product-detail-meta-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
-                                <span>SKU: <%= product.sku %></span>
-                            </div>
-                            <% } %>
-                            <% if (product.brand) { %>
-                            <div class="product-detail-meta-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"></path><path d="M12 6v6l4 2"></path></svg>
-                                <span><%= product.brand %></span>
-                            </div>
-                            <% } %>
-                            <% if (product.stock !== undefined) { %>
-                            <div class="product-detail-meta-item <%= product.stock > 0 ? '' : 'out-of-stock' %>">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
-                                <span>Stok: <%= product.stock > 0 ? product.stock + ' tersedia' : '<span style="color: #dc2626;">Habis</span>' %></span>
-                            </div>
-                            <% } %>
-                            <% if (product.warrantyMonths) { %>
-                            <div class="product-detail-meta-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                <span>Garansi: <%= product.warrantyMonths %> bulan</span>
-                            </div>
-                            <% } %>
-                            <% if (product.isDigital) { %>
-                            <div class="product-detail-meta-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                <span>Produk Digital</span>
-                            </div>
-                            <% } %>
-                            <% if (product.duration) { %>
-                            <div class="product-detail-meta-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                <span><%= product.duration %></span>
-                            </div>
-                            <% } %>
-                            <% if (product.level) { %>
-                            <div class="product-detail-meta-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                                <span>Level: <%= product.level %></span>
-                            </div>
-                            <% } %>
-                            <% if (product.instructor) { %>
-                            <div class="product-detail-meta-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                <span><%= product.instructor %></span>
-                            </div>
-                            <% } %>
+
+                <!-- Info -->
+                <div class="product-info-card">
+                    <!-- Badges -->
+                    <div class="product-badges" id="productBadges">
+                        <span class="badge badge-category"><%= product.category %></span>
+                        <% if (product.brand) { %>
+                        <span class="badge badge-brand"><%= product.brand %></span>
+                        <% } %>
+                        <% if (product.stock !== undefined) { %>
+                        <span class="badge badge-stock <%= product.stock > 0 ? '' : 'out' %>">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                            <%= product.stock > 0 ? product.stock + ' tersedia' : 'Habis' %>
+                        </span>
+                        <% } %>
+                        <% if (product.isDigital) { %>
+                        <span class="badge badge-digital">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            Digital
+                        </span>
+                        <% } %>
+                        <% if (product.warrantyMonths) { %>
+                        <span class="badge badge-warranty">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            Garansi <%= product.warrantyMonths %> bln
+                        </span>
+                        <% } %>
+                        <% if (product.level) { %>
+                        <span class="badge badge-level"><%= product.level %></span>
+                        <% } %>
+                    </div>
+
+                    <!-- Title -->
+                    <h1 class="product-title"><%= product.name %></h1>
+
+                    <!-- Rating placeholder -->
+                    <div class="product-rating">
+                        <div class="rating-stars">
+                            <svg class="rating-star filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></svg>
+                            <svg class="rating-star filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></svg>
+                            <svg class="rating-star filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></svg>
+                            <svg class="rating-star filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></svg>
+                            <svg class="rating-star" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></svg>
                         </div>
+                        <span class="rating-count">(128 ulasan)</span>
                     </div>
-                    <div class="product-detail-description">
-                        <%= product.description %>
-                    </div>
-                    
-                    <% if (product.specifications && Object.keys(product.specifications).length > 0) { %>
-                    <div class="product-specifications">
-                        <h4>Spesifikasi</h4>
-                        <table class="spec-table">
-                            <% Object.entries(product.specifications).forEach(([key, value]) => { %>
-                            <tr>
-                                <td><%= key %></td>
-                                <td><%= value %></td>
-                            </tr>
-                            <% }) %>
-                        </table>
-                    </div>
-                    <% } %>
-                    
-                    <% if (product.tags && product.tags.length > 0) { %>
-                    <div class="product-tags">
-                        <span class="tags-label">Tag:</span>
-                        <div class="tags-list">
-                            <% product.tags.forEach(tag => { %>
-                            <span class="tag"><%= tag %></span>
-                            <% }) %>
-                        </div>
-                    </div>
-                    <% } %>
-                    
-                    <div class="product-detail-price">
+
+                    <!-- Price -->
+                    <div class="product-price-row">
                         <span class="price-current"><%= formatRupiah(product.price) %></span>
                         <% if (product.originalPrice && product.originalPrice > product.price) { %>
                         <span class="price-original"><%= formatRupiah(product.originalPrice) %></span>
+                        <span class="price-discount-badge">-<%= Math.round((1 - product.price/product.originalPrice) * 100) %>%</span>
                         <% } %>
                     </div>
-                    <div class="quantity-selector">
-                        <label for="quantity">Jumlah:</label>
-                        <div class="quantity-input">
-                            <button type="button" class="quantity-btn" id="qty-decrease" aria-label="Kurangi jumlah">−</button>
-                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= product.stock || 10 %>" readonly>
-                            <button type="button" class="quantity-btn" id="qty-increase" aria-label="Tambah jumlah">+</button>
+
+                    <!-- Description - Collapsible -->
+                    <div class="collapsible-section" id="descSection">
+                        <div class="collapsible-header" onclick="toggleCollapsible('descSection')">
+                            <h4>Deskripsi Produk</h4>
+                            <svg class="collapsible-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="description-text"><%= product.description %></div>
                         </div>
                     </div>
 
+                    <!-- Specifications - Collapsible -->
+                    <% if (product.specifications && Object.keys(product.specifications).length > 0) { %>
+                    <div class="collapsible-section" id="specSection">
+                        <div class="collapsible-header" onclick="toggleCollapsible('specSection')">
+                            <h4>Spesifikasi</h4>
+                            <svg class="collapsible-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="collapsible-content">
+                            <table class="spec-table">
+                                <% Object.entries(product.specifications).forEach(([key, value]) => { %>
+                                <tr>
+                                    <td><%= key %></td>
+                                    <td><%= value %></td>
+                                </tr>
+                                <% }) %>
+                            </table>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Tags -->
+                    <% if (product.tags && product.tags.length > 0) { %>
+                    <div class="collapsible-section" id="tagsSection">
+                        <div class="collapsible-header" onclick="toggleCollapsible('tagsSection')">
+                            <h4>Tag</h4>
+                            <svg class="collapsible-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="tags-row">
+                                <% product.tags.forEach(tag => { %>
+                                <span class="tag-chip"><%= tag %></span>
+                                <% }) %>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Size Selector -->
                     <%
                         const apparelText = [product.category, product.name, product.description, Array.isArray(product.tags) ? product.tags.join(' ') : ''].join(' ');
                         const apparelKeywords = /fashion|pakaian|baju|kaos|kemeja|shirt|t-shirt|polo|celana|jeans|clothing|apparel/i;
@@ -144,14 +474,14 @@
                     %>
                     <% if (showSizeSelector) { %>
                     <div class="size-selector">
-                        <label>Ukuran:</label>
-                        <div class="size-options" role="group" aria-label="Pilih ukuran produk">
+                        <label>Ukuran</label>
+                        <div class="size-chips" role="group" aria-label="Pilih ukuran produk">
                             <% const sizePricingConfig = typeof sizePricing !== 'undefined' ? sizePricing : { S: 0, M: 0, L: 0, XL: 0, XXL: 25000, XXXL: 50000 }; %>
-                            <% ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].forEach((sizeOption) => { %>
-                            <button type="button" class="size-option <%= sizeOption === 'M' ? 'selected' : '' %>" data-size="<%= sizeOption %>" data-size-price="<%= Number(sizePricingConfig[sizeOption] || 0) %>">
+                            <% ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].forEach((sizeOption, i) => { %>
+                            <button type="button" class="size-chip <%= i === 1 ? 'selected' : '' %>" data-size="<%= sizeOption %>" data-size-price="<%= Number(sizePricingConfig[sizeOption] || 0) %>">
                                 <span><%= sizeOption %></span>
                                 <% if ((Number(sizePricingConfig[sizeOption] || 0)) > 0) { %>
-                                <small>+ <%= formatRupiah(Number(sizePricingConfig[sizeOption] || 0)) %></small>
+                                <small class="size-price">+ <%= formatRupiah(Number(sizePricingConfig[sizeOption] || 0)) %></small>
                                 <% } %>
                             </button>
                             <% }) %>
@@ -159,34 +489,45 @@
                     </div>
                     <% } %>
 
-                    <form action="/add-to-cart/<%= product.id %>" method="POST" class="add-to-cart-form">
-                        <% if (showSizeSelector) { %>
-                        <input type="hidden" name="size" id="selected-size" value="M">
-                        <input type="hidden" name="size_price" id="selected-size-price" value="0">
-                        <% } %>
-                        <input type="hidden" name="quantity" id="quantity-hidden" value="1">
-                        <button type="submit" class="btn btn-primary btn-add-cart" <%= product.stock === 0 ? 'disabled' : '' %>>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                            <%= product.isDigital ? 'Beli Sekarang' : 'Masukkan ke Keranjang' %>
-                        </button>
-                    </form>
-                    
+                    <!-- Quantity Selector -->
+                    <div class="qty-selector">
+                        <span class="qty-label">Jumlah</span>
+                        <div class="qty-pill">
+                            <button type="button" class="qty-btn" id="qty-decrease" aria-label="Kurangi">−</button>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= product.stock || 10 %>" readonly class="qty-input">
+                            <button type="button" class="qty-btn" id="qty-increase" aria-label="Tambah">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Features -->
                     <% if (!product.isDigital && (product.specifications || product.warrantyMonths || product.tags)) { %>
-                    <div class="product-detail-features">
+                    <div class="features-list">
                         <h4>Info Produk</h4>
-                        <ul>
-                            <% if (product.warrantyMonths) { %>
-                            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Garansi <%= product.warrantyMonths %> bulan</li>
-                            <% } %>
-                            <% if (!product.isDigital && product.warrantyMonths === undefined) { %>
-                            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Garansi standar 7 hari</li>
-                            <% } %>
-                            <% if (product.tags && product.tags.length > 0) { %>
-                            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17 4 12"></polyline></svg> Tag: <%= product.tags.join(', ') %></li>
-                            <% } %>
-                            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Pengiriman ke seluruh Indonesia</li>
-                            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Retur & refund 7 hari</li>
-                        </ul>
+                        <% if (product.warrantyMonths) { %>
+                        <div class="feature-row">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span>Garansi <%= product.warrantyMonths %> bulan</span>
+                        </div>
+                        <% } else { %>
+                        <div class="feature-row">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span>Garansi standar 7 hari</span>
+                        </div>
+                        <% } %>
+                        <% if (product.tags && product.tags.length > 0) { %>
+                        <div class="feature-row">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17 4 12"></path></svg>
+                            <span>Tag: <%= product.tags.join(', ') %></span>
+                        </div>
+                        <% } %>
+                        <div class="feature-row">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17 4 12"></path></svg>
+                            <span>Pengiriman ke seluruh Indonesia</span>
+                        </div>
+                        <div class="feature-row">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17 4 12"></path></svg>
+                            <span>Retur & refund 7 hari</span>
+                        </div>
                     </div>
                     <% } %>
                 </div>
@@ -194,60 +535,113 @@
         </div>
     </section>
 
+    <!-- Sticky Bottom Cart Bar (Mobile) -->
+    <div class="sticky-cart-bar" id="stickyCartBar" style="display: none;">
+        <div class="sticky-price">
+            <div class="label">Total</div>
+            <div class="value" id="stickyPrice"><%= formatRupiah(product.price) %></div>
+        </div>
+        <form action="/add-to-cart/<%= product.id %>" method="POST" style="flex: 1;">
+            <% if (showSizeSelector) { %>
+            <input type="hidden" name="size" id="selected-size" value="M">
+            <input type="hidden" name="size_price" id="selected-size-price" value="0">
+            <% } %>
+            <input type="hidden" name="quantity" id="quantity-hidden" value="1">
+            <button type="submit" class="btn btn-primary sticky-btn" <%= product.stock === 0 ? 'disabled' : '' %>>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                <%= product.isDigital ? 'Beli Sekarang' : 'Masukkan Keranjang' %>
+            </button>
+        </form>
+    </div>
+
     <%- include('partials/footer.ejs') %>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Elements
             const qtyInput = document.getElementById('quantity');
             const qtyHidden = document.getElementById('quantity-hidden');
             const decreaseBtn = document.getElementById('qty-decrease');
             const increaseBtn = document.getElementById('qty-increase');
             const maxQty = parseInt(qtyInput.max) || 10;
-            const sizeButtons = document.querySelectorAll('.size-option');
+            const sizeChips = document.querySelectorAll('.size-chip');
             const selectedSizeInput = document.getElementById('selected-size');
             const selectedSizePriceInput = document.getElementById('selected-size-price');
-            const addToCartForm = document.querySelector('.add-to-cart-form');
+            const stickyBar = document.getElementById('stickyCartBar');
+            const stickyPrice = document.getElementById('stickyPrice');
+            const mainPrice = document.querySelector('.price-current');
             
+            // Price per unit (base + size)
+            let basePrice = <%= product.price %>;
+            let sizePrice = 0;
+
             function updateQty(val) {
                 val = Math.max(1, Math.min(maxQty, val));
                 qtyInput.value = val;
                 qtyHidden.value = val;
+                updateStickyPrice();
             }
 
-            if (sizeButtons.length > 0 && selectedSizeInput) {
-                sizeButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        sizeButtons.forEach(item => item.classList.toggle('selected', item === button));
-                        selectedSizeInput.value = button.dataset.size;
-                        selectedSizePriceInput.value = button.dataset.sizePrice || '0';
+            function updateStickyPrice() {
+                const total = (basePrice + sizePrice) * parseInt(qtyInput.value);
+                if (stickyPrice) stickyPrice.textContent = formatRupiah(total);
+            }
+
+            function formatRupiah(num) {
+                return 'Rp ' + Number(num).toLocaleString('id-ID');
+            }
+
+            // Size chips
+            if (sizeChips.length > 0 && selectedSizeInput) {
+                sizeChips.forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        sizeChips.forEach(c => c.classList.toggle('selected', c === chip));
+                        selectedSizeInput.value = chip.dataset.size;
+                        selectedSizePriceInput.value = chip.dataset.sizePrice || '0';
+                        sizePrice = parseInt(chip.dataset.sizePrice) || 0;
+                        updateStickyPrice();
                     });
                 });
-
-                addToCartForm.addEventListener('submit', (event) => {
-                    if (!selectedSizeInput.value) {
-                        event.preventDefault();
-                        alert('Pilih ukuran terlebih dahulu.');
-                    }
-                });
             }
-            
+
+            // Qty buttons
             decreaseBtn.addEventListener('click', () => updateQty(parseInt(qtyInput.value) - 1));
             increaseBtn.addEventListener('click', () => updateQty(parseInt(qtyInput.value) + 1));
             qtyInput.addEventListener('change', () => updateQty(parseInt(qtyInput.value)));
+
+            // Show sticky bar on mobile scroll
+            if (window.innerWidth <= 768 && stickyBar) {
+                let lastScroll = 0;
+                window.addEventListener('scroll', () => {
+                    const scrollY = window.scrollY;
+                    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    const scrollPercent = scrollY / docHeight;
+                    
+                    // Show after 30% scroll
+                    if (scrollPercent > 0.3) {
+                        stickyBar.style.display = 'flex';
+                    } else {
+                        stickyBar.style.display = 'none';
+                    }
+                    lastScroll = scrollY;
+                }, { passive: true });
+                
+                // Initial price
+                updateStickyPrice();
+            }
+
+            // Collapsible sections
+            window.toggleCollapsible = function(id) {
+                const section = document.getElementById(id);
+                if (section) section.classList.toggle('open');
+            };
+            
+            // Auto-open description on mobile
+            if (window.innerWidth <= 768) {
+                const descSection = document.getElementById('descSection');
+                if (descSection) descSection.classList.add('open');
+            }
         });
     </script>
-    <style>
-        .size-selector { margin-top: 18px; }
-        .size-selector label { display: block; margin-bottom: 10px; font-weight: 700; color: var(--text-primary); }
-        .size-options { display: flex; flex-wrap: wrap; gap: 8px; }
-        .size-option {
-            min-width: 78px; padding: 10px 12px; border: 1px solid #dfe7ee; border-radius: 10px; background: #fff;
-            color: var(--text-primary); font-weight: 700; cursor: pointer; transition: all 0.2s ease;
-            display: flex; flex-direction: column; align-items: center; gap: 2px;
-        }
-        .size-option small { font-size: 10px; font-weight: 600; opacity: 0.8; }
-        .size-option.selected { background: var(--unm-blue); border-color: var(--unm-blue); color: #fff; box-shadow: 0 8px 16px rgba(32, 66, 138, 0.18); }
-        .size-option.selected small { color: #fff; }
-    </style>
 </body>
 </html>
