@@ -422,6 +422,9 @@ app.get('/checkout', async (req, res) => {
       Object.entries(paymentFees).filter(([, m]) => m.active !== false)
     );
 
+    console.log('[DEBUG] paymentFees from DB:', JSON.stringify(paymentFees, null, 2));
+    console.log('[DEBUG] activePaymentFees:', JSON.stringify(activePaymentFees, null, 2));
+
     const poEnabled = settings.po_enabled === '1' || settings.po_enabled === true || settings.po_enabled === 'true';
     
     res.render('checkout', { 
