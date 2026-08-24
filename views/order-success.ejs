@@ -55,9 +55,15 @@
         <% const isPaid=order && order.payment_status==='paid' ; const isDPPaid=order &&
             order.payment_status==='dp_paid' ; const isUnpaid=!isPaid && !isDPPaid; const isPO=order &&
             (order.is_preorder || (order.notes && order.notes.includes('PRE-ORDER'))); const paymentFee=Number(order &&
-            (order.paymentFee || order.payment_fee || 0) || 0); const baseTotal=Number(order && (order.subtotal ||
-            order.total || 0)); const dpAmt=order && (order.dp_amount || Math.round(baseTotal * ((order.dp_percentage ||
-            50) / 100))); const remainingAmt=order ? Math.max(baseTotal - Number(dpAmt || 0), 0) : 0; const
+            (order.paymentFee || order.payment_fee || 0) || 0);
+            // Gunakan TOTAL (setelah diskon kupon), bukan subtotal
+            const grandTotalS=Number(order && (order.total || order.subtotal || 0));
+            const storedDpS=Number(order && order.dp_amount || 0);
+            const dpPctS=Number(order && order.dp_percentage || 50);
+            const expectedDpS=Math.round(grandTotalS * (dpPctS / 100));
+            const dpAmt=(storedDpS > 0 && Math.abs(storedDpS - expectedDpS) <= 1) ? storedDpS : expectedDpS;
+            const baseTotal=grandTotalS;
+            const remainingAmt=Math.max(baseTotal - Number(dpAmt || 0), 0); const
             currentCharge=isPO ? (isDPPaid ? remainingAmt + paymentFee : Number(dpAmt || 0) + paymentFee) : baseTotal +
             paymentFee; %>
 

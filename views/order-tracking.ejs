@@ -479,11 +479,19 @@
                                         </div>
                                         <% } %>
                                             <% const isPO=order.is_preorder || (order.notes &&
-                                                order.notes.includes('PRE-ORDER')); const
-                                                baseTotal=Number(order.subtotal || order.total || 0); const
-                                                dpAmt=Number(order.dp_amount || Math.round(baseTotal *
-                                                ((order.dp_percentage || 50) / 100))); const
-                                                remainingAmt=Math.max(baseTotal - dpAmt, 0); const
+                                                order.notes.includes('PRE-ORDER'));
+                                                // Gunakan TOTAL (setelah diskon kupon), bukan subtotal
+                                                const discountAmt=Number(order.subtotal || 0) - Number(order.total || 0);
+                                                const grandTotal=Number(order.total || order.subtotal || 0);
+                                                const storedDp=Number(order.dp_amount || 0);
+                                                // dp_amount tersimpan mungkin sudah lama (dihitung dari subtotal);
+                                                // hitung ulang dari total jika tidak konsisten
+                                                const dpPct=Number(order.dp_percentage || 50);
+                                                const expectedDp=Math.round(grandTotal * (dpPct / 100));
+                                                const baseTotal=grandTotal;
+                                                const dpAmt=(storedDp > 0 && Math.abs(storedDp - expectedDp) <= 1)
+                                                    ? storedDp : expectedDp;
+                                                const remainingAmt=Math.max(baseTotal - dpAmt, 0); const
                                                 isPaidFull=order.payment_status==='paid' ; const
                                                 isDPPaid=order.payment_status==='dp_paid' || order.status==='processing'
                                                 || order.status==='ready' ; %>
@@ -663,8 +671,17 @@
                                                                     <div class="info-item">
                                                                         <div class="info-label">Total Pesanan</div>
                                                                         <div class="info-value">
-                                                                            <%= formatRupiah(Number(order.subtotal ||
-                                                                                order.total || 0)) %>
+                                                                            <% if (discountAmt > 0) { %>
+                                                                                <div style="font-size:12px;color:#64748b;font-weight:500;">
+                                                                                    Subtotal: <%= formatRupiah(Number(order.subtotal || 0)) %>
+                                                                                </div>
+                                                                                <div style="font-size:12px;color:#16a34a;font-weight:600;">
+                                                                                    Diskon: -<%= formatRupiah(discountAmt) %>
+                                                                                </div>
+                                                                                <div style="margin-top:2px;"><%= formatRupiah(grandTotal) %></div>
+                                                                                <% } else { %>
+                                                                                    <%= formatRupiah(grandTotal) %>
+                                                                                    <% } %>
                                                                         </div>
                                                                     </div>
                                                                     <div class="info-item" style="grid-column: 1/-1;">

@@ -1366,9 +1366,14 @@ app.post('/api/orders/:orderNumber/pelunasan', async (req, res) => {
 
     const isPreorder = !!(order.is_preorder || order.isPreorder || (order.notes && /pre[- ]?order/i.test(order.notes)));
     const isDPPaid = order.payment_status === 'dp_paid' || order.status === 'processing' || order.status === 'ready';
-    const subtotal = Number(order.subtotal || order.total || 0);
-    const total = subtotal;
-    const dpAmt = Number(order.dp_amount || Math.round(total * ((order.dp_percentage || 50) / 100)) || 0);
+    // Gunakan TOTAL (setelah diskon kupon), bukan subtotal
+    const total = Number(order.total || order.subtotal || 0);
+    const dpPct = Number(order.dp_percentage || 50);
+    const storedDp = Number(order.dp_amount || 0);
+    const expectedDp = Math.round(total * (dpPct / 100));
+    // dp_amount tersimpan mungkin dihitung dari subtotal (sebelum diskon) oleh versi lama;
+    // hitung ulang dari total jika nilainya tidak konsisten
+    const dpAmt = (storedDp > 0 && Math.abs(storedDp - expectedDp) <= 1) ? storedDp : expectedDp;
     const remainingAmt = Math.max(total - dpAmt, 0);
     const dueBase = isPreorder ? (isDPPaid ? remainingAmt : dpAmt) : total;
 
