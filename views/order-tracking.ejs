@@ -515,8 +515,22 @@
                                                         </p>
                                                         <div class="settlement-grid">
                                                             <div>
-                                                                <div class="settlement-item-lbl">Total Nilai Pesanan
+                                                                <div class="settlement-item-lbl">Subtotal</div>
+                                                                <div class="settlement-item-val">
+                                                                    <%= formatRupiah(Number(order.subtotal || 0)) %>
                                                                 </div>
+                                                            </div>
+                                                            <% if (discountAmt > 0) { %>
+                                                                <div>
+                                                                    <div class="settlement-item-lbl">Diskon Kupon</div>
+                                                                    <div class="settlement-item-val"
+                                                                        style="color:#16a34a;">
+                                                                        -<%= formatRupiah(discountAmt) %>
+                                                                    </div>
+                                                                </div>
+                                                                <% } %>
+                                                            <div>
+                                                                <div class="settlement-item-lbl"><%= discountAmt > 0 ? 'Total Setelah Diskon' : 'Total Nilai Pesanan' %></div>
                                                                 <div class="settlement-item-val">
                                                                     <%= formatRupiah(baseTotal) %>
                                                                 </div>
@@ -561,6 +575,21 @@
                                                                 Silakan lakukan pembayaran online di bawah ini agar
                                                                 pesanan dapat segera dikemas.</p>
                                                             <div class="settlement-grid" style="border-color: #fde68a;">
+                                                                <% if (discountAmt > 0) { %>
+                                                                    <div>
+                                                                        <div class="settlement-item-lbl">Subtotal</div>
+                                                                        <div class="settlement-item-val">
+                                                                            <%= formatRupiah(Number(order.subtotal || 0)) %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="settlement-item-lbl">Diskon Kupon</div>
+                                                                        <div class="settlement-item-val"
+                                                                            style="color:#16a34a;">
+                                                                            -<%= formatRupiah(discountAmt) %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <% } %>
                                                                 <div style="grid-column: 1/-1;">
                                                                     <div class="settlement-item-lbl">Total Tagihan yang
                                                                         Harus Dibayar</div>
