@@ -1145,6 +1145,11 @@ footer {
     overflow-x: auto;
 }
 
+/* Daftar keranjang versi mobile disembunyikan di desktop (hanya tampil <= 768px) */
+.cart-mobile-list {
+    display: none;
+}
+
 .cart-table {
     width: 100%;
     border-collapse: collapse;
