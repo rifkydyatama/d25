@@ -1,8 +1,8 @@
-// Service Worker for D25 Teknologi Pendidikan PWA
-const CACHE_NAME = 'd25-tdp-cache-v3';
+﻿// Service Worker for D25 Teknologi Pendidikan PWA
+const CACHE_NAME = 'd25-tdp-cache-v4';
 const urlsToCache = [
     '/',
-    '/css/style.css',
+    '/css/style.css?v=6',
     '/js/main.js',
     '/manifest.json',
     '/images/icon-192.png',
@@ -17,37 +17,58 @@ const urlsToCache = [
     '/images/product-bundle.svg'
 ];
 
-// Install service worker and cache assets
+// Install: cache assets
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
     );
+    self.skipWaiting();
 });
 
-// Activate service worker and clean up old caches
+// Activate: bersihkan cache lama & segera ambil-alih kontrol halaman
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.filter(cacheName => {
-                    return cacheName !== CACHE_NAME;
-                }).map(cacheName => {
-                    return caches.delete(cacheName);
-                })
-            );
-        })
+        caches.keys().then(cacheNames => Promise.all(
+            cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
+        )).then(() => self.clients.claim())
     );
 });
 
-// Fetch assets from cache or network
+// Fetch:
+// - Navigasi (halaman): network-first dengan fallback cache (hindari halaman basi/duplikat)
+// - Aset statis: cache-first
 self.addEventListener('fetch', event => {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    // Hanya tangani GET & asal yang sama (hindari cross-origin/cache API)
+    if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+    // Navigasi dokumen -> network-first
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+                    return response;
+                })
+                .catch(() => caches.match(request).then(cached => cached || caches.match('/')))
+        );
+        return;
+    }
+
+    // Aset statis -> cache-first, lalu isi cache saat pertama kali
     event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Return cached response if found, otherwise fetch from network
-                return response || fetch(event.request);
-            }
-            )
+        caches.match(request).then(cached => {
+            if (cached) return cached;
+            return fetch(request).then(response => {
+                if (response && response.ok) {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+                }
+                return response;
+            });
+        })
     );
 });
