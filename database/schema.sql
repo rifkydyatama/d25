@@ -85,9 +85,9 @@ CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_number VARCHAR(50) UNIQUE NOT NULL,
     user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'cancelled', 'refunded')),
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'preorder', 'processing', 'ready', 'completed', 'cancelled', 'refunded')),
     payment_method VARCHAR(50),
-    payment_status VARCHAR(50) DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'paid', 'failed', 'refunded')),
+    payment_status VARCHAR(50) DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'pending', 'dp_paid', 'paid', 'failed', 'refunded')),
     payment_id VARCHAR(255), -- BRI VA number, transaction ID, etc.
     
     -- Customer info (denormalized for order history)

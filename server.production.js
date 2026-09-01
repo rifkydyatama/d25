@@ -669,7 +669,7 @@ app.post('/payment/midtrans-notification', async (req, res) => {
   try {
     logger.info('Midtrans Notification', { body: req.body });
     
-    const notification = await midtrans.core.transactions.notification(req.body);
+    const notification = await midtrans.core.transaction.notification(req.body);
     
     const { 
       order_id,

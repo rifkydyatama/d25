@@ -679,11 +679,11 @@ app.get('/order-success', async (req, res) => {
 });
 
 // Midtrans Notification Handler (Webhook)
-app.post('/payment/midtrans-notification', async (req, res) => {
+async function handleMidtransNotification(req, res) {
   try {
     console.log('Midtrans Notification received:', req.body);
 
-    const notification = await timeoutPromise(midtrans.core.transactions.notification(req.body), 10000);
+    const notification = await timeoutPromise(midtrans.core.transaction.notification(req.body), 10000);
 
     const {
       order_id,
@@ -793,7 +793,11 @@ app.post('/payment/midtrans-notification', async (req, res) => {
     console.error('Midtrans Notification error:', e);
     res.status(500).json({ status: 'error', message: 'Internal server error' });
   }
-});
+}
+
+// Terima webhook dari dua URL (untuk kompatibilitas Vercel/serverless & self-hosted)
+app.post('/payment/midtrans-notification', handleMidtransNotification);
+app.post('/api/payment/midtrans-notification', handleMidtransNotification);
 
 // Login
 app.get('/login', async (req, res) => {
