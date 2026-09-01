@@ -603,7 +603,8 @@ app.post('/checkout', async (req, res) => {
 
     // Create Midtrans Snap transaction (charges DP for PO or Full for Regular)
     try {
-      const snapPayload = buildSnapPayload(order);
+      const baseUrl = process.env.BASE_URL || process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+      const snapPayload = buildSnapPayload(order, baseUrl);
       const snapResponse = await midtrans.createSnapTransaction(snapPayload);
       
       order.paymentToken = snapResponse.token;
