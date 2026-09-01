@@ -13,6 +13,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 const { productService, cartService, orderService, settingsService, authService } = require('./lib/db');
 const { Midtrans, buildSnapPayload, buildCoreVAPayload } = require('./lib/midtrans');
+const createMidtransWebhookHandler = require('./lib/midtransWebhook');
 const emailService = require('./lib/email');
 const logger = require('./lib/logger');
 
@@ -665,130 +666,15 @@ app.get('/order-success', async (req, res) => {
   }
 });
 
-// Midtrans Notification Handler
-app.post('/payment/midtrans-notification', async (req, res) => {
-  try {
-    logger.info('Midtrans Notification', { body: req.body });
-    
-    const notification = await midtrans.core.transaction.notification(req.body);
-    
-    const { 
-      order_id,
-      transaction_status,
-      fraud_status,
-      payment_type,
-      va_numbers,
-      transaction_time,
-      gross_amount
-    } = notification;
-    
-    if (!order_id) {
-      return res.status(400).json({ status: 'error', message: 'Invalid payload' });
-    }
-    
-    const baseOrderNumber = order_id.replace(/-(?:DP|LUNAS)(?:-\d+)?$/i, '');
-    const isSettlement = /-LUNAS(?:-\d+)?$/i.test(order_id);
-
-    const { data: order } = await supabaseAdmin
-      .from('orders')
-      .select('*')
-      .eq('order_number', baseOrderNumber)
-      .single();
-    
-    if (!order) {
-      logger.warn('Order not found for notification', { orderId: order_id, base: baseOrderNumber });
-      return res.status(404).json({ status: 'error', message: 'Order not found' });
-    }
-    
-    let newStatus = order.status;
-    let newPaymentStatus = order.payment_status;
-    const isPO = order.is_preorder || (order.notes && order.notes.includes('PRE-ORDER'));
-    
-    switch (transaction_status) {
-      case 'capture':
-        if (fraud_status === 'challenge') {
-          newStatus = 'processing';
-          newPaymentStatus = 'pending';
-        } else if (fraud_status === 'accept') {
-          if (isSettlement || !isPO) {
-            newStatus = 'completed';
-            newPaymentStatus = 'paid';
-          } else {
-            newStatus = 'processing';
-            newPaymentStatus = 'dp_paid';
-          }
-        }
-        break;
-      case 'settlement':
-        if (isSettlement || !isPO) {
-          newStatus = 'completed';
-          newPaymentStatus = 'paid';
-        } else {
-          newStatus = 'processing';
-          newPaymentStatus = 'dp_paid';
-        }
-        break;
-      case 'pending':
-        newStatus = isPO ? 'preorder' : 'processing';
-        newPaymentStatus = 'pending';
-        break;
-      case 'deny':
-      case 'cancel':
-      case 'expire':
-        newStatus = 'cancelled';
-        newPaymentStatus = 'failed';
-        break;
-      default:
-        newStatus = 'processing';
-        newPaymentStatus = 'pending';
-    }
-    
-    const updates = {
-      status: newStatus,
-      payment_status: newPaymentStatus,
-      payment_type: payment_type,
-      payment_details: notification,
-      updated_at: new Date().toISOString()
-    };
-    
-    if (newPaymentStatus === 'paid') {
-      updates.paid_at = new Date().toISOString();
-    }
-    if (newStatus === 'completed') {
-      updates.completed_at = new Date().toISOString();
-    }
-    if (va_numbers?.[0]?.va_number) {
-      updates.payment_id = va_numbers[0].va_number;
-    }
-    
-    await supabaseAdmin
-      .from('orders')
-      .update(updates)
-      .eq('id', order.id);
-    
-    logger.info('Order updated from notification', { 
-      orderId: order_id, 
-      transactionStatus: transaction_status,
-      newStatus,
-      newPaymentStatus
-    });
-    
-    // Send email based on status
-    if (newPaymentStatus === 'paid' && order.payment_status !== 'paid') {
-      await emailService.sendPaymentSuccess({
-        ...order,
-        paid_at: new Date().toISOString()
-      });
-    } else if (newPaymentStatus === 'failed' && order.payment_status !== 'failed') {
-      await emailService.sendPaymentFailed({ ...order }, 'failed');
-    }
-    
-    res.status(200).json({ status: 'success' });
-  } catch (e) {
-    logger.error('Midtrans Notification error', { error: e.message });
-    res.status(500).json({ status: 'error', message: 'Internal server error' });
-  }
+// Midtrans Notification Handler (Webhook)
+const handleMidtransNotification = createMidtransWebhookHandler({
+  getAdminDb: () => supabaseAdmin,
+  log: logger,
+  sendPaymentSuccessEmail: (order) => emailService.sendPaymentSuccess(order),
+  sendPaymentFailedEmail: (order, reason) => emailService.sendPaymentFailed(order, reason)
 });
+app.post('/payment/midtrans-notification', handleMidtransNotification);
+app.post('/api/payment/midtrans-notification', handleMidtransNotification);
 
 // Login
 app.get('/login', async (req, res) => {
@@ -1516,94 +1402,9 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// Midtrans webhook
-app.post('/api/payment/midtrans-notification', async (req, res) => {
-  try {
-    logger.info('Midtrans Notification', { body: req.body });
-    
-    const notification = req.body;
-    const { order_id, transaction_status, fraud_status, payment_type, va_numbers } = notification;
+// Midtrans webhook — di-handle oleh modul bersama (lihat handler di atas:
+// app.post('/payment/midtrans-notification') & app.post('/api/payment/midtrans-notification'))
 
-    if (!order_id) {
-      return res.status(400).json({ status: 'error', message: 'Invalid payload' });
-    }
-
-    const { data: order } = await supabaseAdmin
-      .from('orders')
-      .select('*')
-      .eq('order_number', order_id)
-      .single();
-
-    if (!order) {
-      logger.warn('Order not found for notification', { orderId: order_id });
-      return res.status(404).json({ status: 'error', message: 'Order not found' });
-    }
-
-    let newStatus = order.status;
-    let newPaymentStatus = order.payment_status;
-
-    switch (transaction_status) {
-      case 'capture':
-        if (fraud_status === 'challenge') {
-          newStatus = 'processing';
-          newPaymentStatus = 'pending';
-        } else if (fraud_status === 'accept') {
-          newStatus = 'completed';
-          newPaymentStatus = 'paid';
-        }
-        break;
-      case 'settlement':
-        newStatus = 'completed';
-        newPaymentStatus = 'paid';
-        break;
-      case 'pending':
-        newStatus = 'processing';
-        newPaymentStatus = 'pending';
-        break;
-      case 'deny':
-      case 'cancel':
-      case 'expire':
-        newStatus = 'cancelled';
-        newPaymentStatus = 'failed';
-        break;
-    }
-
-    const updates = {
-      status: newStatus,
-      payment_status: newPaymentStatus,
-      payment_type: payment_type,
-      payment_details: notification,
-      updated_at: new Date().toISOString()
-    };
-
-    if (newPaymentStatus === 'paid') {
-      updates.paid_at = new Date().toISOString();
-    }
-    if (newStatus === 'completed') {
-      updates.completed_at = new Date().toISOString();
-    }
-    if (va_numbers?.[0]?.va_number) {
-      updates.payment_id = va_numbers[0].va_number;
-    }
-
-    await supabaseAdmin
-      .from('orders')
-      .update(updates)
-      .eq('id', order.id);
-
-    logger.info('Order updated from notification', { 
-      orderId: order_id, 
-      transactionStatus: transaction_status,
-      newStatus,
-      newPaymentStatus
-    });
-
-    return res.status(200).json({ status: 'success' });
-  } catch (e) {
-    logger.error('Midtrans Notification error', { error: e.message });
-    res.status(500).json({ status: 'error', message: 'Internal server error' });
-  }
-});
 
 // =====================================================
 // 404 & ERROR HANDLERS

@@ -4,6 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const helmet = require('helmet');
 const { productService, cartService, orderService, settingsService, authService } = require('./lib/db');
+const createMidtransWebhookHandler = require('./lib/midtransWebhook');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -680,121 +681,9 @@ app.get('/order-success', async (req, res) => {
 });
 
 // Midtrans Notification Handler (Webhook)
-async function handleMidtransNotification(req, res) {
-  try {
-    console.log('Midtrans Notification received:', req.body);
-
-    const notification = await timeoutPromise(midtrans.core.transaction.notification(req.body), 10000);
-
-    const {
-      order_id,
-      transaction_status,
-      fraud_status,
-      payment_type,
-      va_numbers,
-      transaction_time,
-      gross_amount
-    } = notification;
-
-    if (!order_id) {
-      return res.status(400).json({ status: 'error', message: 'Invalid payload' });
-    }
-
-    // Find order (handle settlement suffixes like -DP-1234 or -LUNAS-1234)
-    const baseOrderNumber = order_id.replace(/-(?:DP|LUNAS)(?:-\d+)?$/i, '');
-    const isSettlement = /-LUNAS(?:-\d+)?$/i.test(order_id);
-
-    const adminDb = getSupabaseAdmin();
-
-    const { data: order } = await adminDb
-      .from('orders')
-      .select('*')
-      .eq('order_number', baseOrderNumber)
-      .single();
-
-    if (!order) {
-      console.log('Order not found for notification:', order_id, 'base:', baseOrderNumber);
-      return res.status(404).json({ status: 'error', message: 'Order not found' });
-    }
-
-    // Determine new status based on Midtrans status
-    let newStatus = order.status;
-    let newPaymentStatus = order.payment_status;
-    const isPO = order.is_preorder || (order.notes && order.notes.includes('PRE-ORDER'));
-
-    switch (transaction_status) {
-      case 'capture':
-        if (fraud_status === 'challenge') {
-          newStatus = 'processing';
-          newPaymentStatus = 'pending';
-        } else if (fraud_status === 'accept') {
-          if (isSettlement || !isPO) {
-            newStatus = 'completed';
-            newPaymentStatus = 'paid';
-          } else {
-            // Initial DP paid
-            newStatus = 'processing';
-            newPaymentStatus = 'dp_paid';
-          }
-        }
-        break;
-      case 'settlement':
-        if (isSettlement || !isPO) {
-          newStatus = 'completed';
-          newPaymentStatus = 'paid';
-        } else {
-          // Initial DP paid
-          newStatus = 'processing';
-          newPaymentStatus = 'dp_paid';
-        }
-        break;
-      case 'pending':
-        newStatus = isPO ? 'preorder' : 'processing';
-        newPaymentStatus = 'pending';
-        break;
-      case 'deny':
-      case 'cancel':
-      case 'expire':
-        newStatus = 'cancelled';
-        newPaymentStatus = 'failed';
-        break;
-      default:
-        newStatus = 'processing';
-        newPaymentStatus = 'pending';
-    }
-
-    // Update order
-    const updates = {
-      status: newStatus,
-      payment_status: newPaymentStatus,
-      payment_type: payment_type,
-      payment_details: notification,
-      updated_at: new Date().toISOString()
-    };
-
-    if (newPaymentStatus === 'paid') {
-      updates.paid_at = new Date().toISOString();
-    }
-    if (newStatus === 'completed') {
-      updates.completed_at = new Date().toISOString();
-    }
-    if (va_numbers?.[0]?.va_number) {
-      updates.payment_id = va_numbers[0].va_number;
-    }
-
-    await adminDb
-      .from('orders')
-      .update(updates)
-      .eq('id', order.id);
-
-    console.log(`Order ${order_id} updated: ${transaction_status} -> ${newStatus} / ${newPaymentStatus}`);
-
-    res.status(200).json({ status: 'success' });
-  } catch (e) {
-    console.error('Midtrans Notification error:', e);
-    res.status(500).json({ status: 'error', message: 'Internal server error' });
-  }
-}
+const handleMidtransNotification = createMidtransWebhookHandler({
+  getAdminDb: getSupabaseAdmin
+});
 
 // Terima webhook dari dua URL (untuk kompatibilitas Vercel/serverless & self-hosted)
 app.post('/payment/midtrans-notification', handleMidtransNotification);
