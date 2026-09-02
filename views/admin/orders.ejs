@@ -319,9 +319,9 @@
                                     </div>
                                 </div>
                                 <div style="border: 1px solid var(--border-color); padding: 16px; border-radius: 8px;">
-                                    <h4 style="margin: 0 0 12px; color: var(--unm-navy);">Alamat & Catatan</h4>
+                                    <h4 style="margin: 0 0 12px; color: var(--unm-navy);">Name Tag & Catatan</h4>
                                     <div style="font-size: 14px; line-height: 1.6;">
-                                        <div><strong>Alamat:</strong> ${order.customer_address || '-'}</div>
+                                        <div><strong>Name Tag:</strong> ${order.name_tag || order.customer_address || '-'}</div>
                                         <div><strong>Catatan:</strong> ${order.notes || '-'}</div>
                                         <div><strong>Metode Bayar:</strong> ${(order.payment_method || 'Midtrans').toUpperCase()}</div>
                                     </div>

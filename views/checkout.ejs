@@ -967,17 +967,24 @@
                                         <div class="form-section-header">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2">
-                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                                <circle cx="12" cy="10" r="3"></circle>
+                                                <path
+                                                    d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z">
+                                                </path>
+                                                <line x1="7" y1="7" x2="7.01" y2="7"></line>
                                             </svg>
-                                            <h3>Alamat Pengiriman</h3>
+                                            <h3>Name Tag</h3>
                                         </div>
                                         <div class="field-grid single">
                                             <div class="field">
-                                                <label for="address">Alamat Lengkap <span
+                                                <label for="name_tag">Nama Name Tag <span
                                                         class="required">*</span></label>
-                                                <textarea id="address" name="address" required rows="3"
-                                                    placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota, Provinsi, Kode Pos"></textarea>
+                                                <input type="text" id="name_tag" name="name_tag" required
+                                                    maxlength="50" autocomplete="off"
+                                                    placeholder="Nama yang dicetak pada name tag, contoh: RIFKY D.">
+                                                <small
+                                                    style="color: var(--text-secondary); font-size: 12px; margin-top: 6px; display: block;">
+                                                    Nama ini akan dicetak pada name tag produk pesanan Anda.
+                                                </small>
                                             </div>
                                         </div>
                                     </div>
@@ -1297,9 +1304,9 @@
                     const name = document.getElementById('name').value.trim();
                     const email = document.getElementById('email').value.trim();
                     const phone = document.getElementById('phone').value.trim();
-                    const address = document.getElementById('address').value.trim();
+                    const nameTag = document.getElementById('name_tag').value.trim();
 
-                    if (!name || !email || !phone || !address) {
+                    if (!name || !email || !phone || !nameTag) {
                         showToast('Mohon lengkapi semua field yang wajib diisi.', 'warning');
                         return;
                     }

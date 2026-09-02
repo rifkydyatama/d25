@@ -715,10 +715,10 @@
                                                                         </div>
                                                                     </div>
                                                                     <div class="info-item" style="grid-column: 1/-1;">
-                                                                        <div class="info-label">Alamat Pengiriman</div>
+                                                                        <div class="info-label">Name Tag</div>
                                                                         <div class="info-value"
                                                                             style="font-weight:500;">
-                                                                            <%= order.customer_address %>
+                                                                            <%= order.name_tag || order.customer_address || '-' %>
                                                                         </div>
                                                                     </div>
                                                                     <% if (order.notes) { %>

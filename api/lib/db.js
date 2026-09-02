@@ -323,7 +323,7 @@ const orderService = {
         customer_name: orderData.name,
         customer_email: orderData.email,
         customer_phone: orderData.phone,
-        customer_address: orderData.address,
+        customer_address: orderData.address || orderData.nameTag || null,
         customer_institution: orderData.institution || null,
         payment_method: orderData.paymentMethod,
         notes: orderData.notes || null,

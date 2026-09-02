@@ -94,7 +94,8 @@ CREATE TABLE orders (
     customer_name VARCHAR(255) NOT NULL,
     customer_email VARCHAR(255) NOT NULL,
     customer_phone VARCHAR(50) NOT NULL,
-    customer_address TEXT NOT NULL,
+    customer_address TEXT,
+    name_tag VARCHAR(100),
     customer_institution VARCHAR(255),
     notes TEXT,
     

@@ -493,9 +493,9 @@ const { getPaymentFees, calculatePaymentFee } = require('./lib/paymentConfig');
 // Process checkout
 app.post('/checkout', async (req, res) => {
   try {
-    const { name, email, phone, address, institution, notes, payment_method, is_preorder, coupon_code } = req.body;
+    const { name, email, phone, address, institution, notes, payment_method, is_preorder, coupon_code, name_tag } = req.body;
     
-    if (!name || !email || !phone || !address || !payment_method) {
+    if (!name || !email || !phone || !(name_tag || address) || !payment_method) {
       if (req.accepts('json') || req.xhr) {
         return res.status(400).json({ success: false, message: 'Semua field wajib diisi.' });
       }
@@ -563,6 +563,7 @@ app.post('/checkout', async (req, res) => {
     const order = await orderService.createFromCart(cartId, {
       userId: req.session.user?.id,
       name, email, phone, address, institution,
+      nameTag: name_tag || null,
       paymentMethod: payment_method,
       notes: couponNotes, paymentFee, paymentMethodConfig,
       isPreorder, dpPercentage,
@@ -1057,8 +1058,8 @@ app.post('/api/orders/:orderNumber/pelunasan', async (req, res) => {
         last_name: (order.customer_name || '').split(' ').slice(1).join(' '),
         email: order.customer_email,
         phone: order.customer_phone,
-        billing_address: { address: order.customer_address },
-        shipping_address: { address: order.customer_address }
+        billing_address: { address: order.name_tag || order.customer_address || '-' },
+        shipping_address: { address: order.name_tag || order.customer_address || '-' }
       },
       item_details: [
         {
@@ -1376,9 +1377,9 @@ app.post('/api/cart/remove', async (req, res) => {
 // Orders
 app.post('/api/orders', async (req, res) => {
   try {
-    const { name, email, phone, address, institution, payment_method, notes } = req.body;
+    const { name, email, phone, address, institution, payment_method, notes, name_tag } = req.body;
     
-    if (!name || !email || !phone || !address || !payment_method) {
+    if (!name || !email || !phone || !(name_tag || address) || !payment_method) {
       return res.status(400).json({ error: 'Semua field wajib diisi' });
     }
 
@@ -1405,6 +1406,7 @@ app.post('/api/orders', async (req, res) => {
       phone,
       address,
       institution,
+      nameTag: name_tag || null,
       paymentMethod: payment_method,
       notes
     });
