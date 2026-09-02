@@ -242,19 +242,6 @@ async function getAllCouponsForValidation() {
   return { ...regular, ...generated };
 }
 
-const COUPON_GEN_DEFAULTS = { minPercent: 5, maxPercent: 15, maxDiscount: 20000, validDays: 7 };
-
-async function getCouponGeneratorConfig() {
-  try {
-    const raw = await settingsService.get('coupon_generator');
-    if (raw) {
-      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      return { ...COUPON_GEN_DEFAULTS, ...parsed };
-    }
-  } catch (e) { /* fallback ke default */ }
-  return { ...COUPON_GEN_DEFAULTS };
-}
-
 // Kode acak yang tidak bisa ditebak; tanpa karakter ambigu (I, O, 0, 1)
 function randomCouponCode() {
   const crypto = require('crypto');
@@ -316,77 +303,88 @@ app.post('/api/validate-coupon', async (req, res) => {
   }
 });
 
-// Generate kupon personal: 1 nama = 1 kode acak, sekali pakai
-app.post('/api/generate-coupon', async (req, res) => {
+// Admin: generate kupon personal (1 nama = 1 kode). Kode & diskon HANYA diatur admin.
+app.post('/admin/coupons/generate', (req, res, next) => {
+  if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).redirect('/login');
+  next();
+}, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, percent, maxDiscount, validDays } = req.body;
     const displayName = String(name || '').trim();
     const normalizedName = normalizeName(name);
 
     if (!normalizedName || normalizedName.length < 3) {
-      return res.json({ success: false, message: 'Masukkan nama lengkap yang valid (min. 3 karakter).' });
+      return res.redirect('/admin/settings?coupon_error=' + encodeURIComponent('Nama penerima harus diisi (min. 3 karakter).'));
+    }
+
+    const pct = Math.max(0, Math.min(100, parseFloat(percent) || 0));
+    if (!pct) {
+      return res.redirect('/admin/settings?coupon_error=' + encodeURIComponent('Besar diskon (%) harus diisi antara 1-100.'));
     }
 
     const generatedCoupons = await getGeneratedCouponsFromDB();
 
     // ATURAN 1 NAMA = 1 DISKON:
-    // - Nama sudah punya kode & belum terpakai -> kembalikan kode yang sama (tidak bisa double-generate)
-    // - Nama sudah pernah memakai diskon -> tolak selamanya
+    // - Nama sudah punya kode & belum terpakai -> tidak boleh dibuat lagi (pakai kode yang ada)
+    // - Nama sudah pernah memakai diskon -> tolak sampai entri dihapus admin
     const existingEntry = Object.entries(generatedCoupons).find(([, c]) => c.boundName === normalizedName);
     if (existingEntry) {
       const [existingCode, existing] = existingEntry;
       if ((existing.usedCount || 0) >= (existing.maxUses || 1)) {
-        return res.json({ success: false, message: `Nama "${displayName}" sudah pernah menggunakan diskon. Setiap nama hanya berhak 1 kali diskon.` });
+        return res.redirect('/admin/settings?coupon_error=' + encodeURIComponent(`Nama "${displayName}" sudah pernah memakai diskon. Hapus entri-nya dulu jika ingin memberi kupon baru.`));
       }
-      if (existing.validUntil && new Date(existing.validUntil) < new Date()) {
-        return res.json({ success: false, message: 'Kode diskon milik nama ini sudah kadaluarsa.' });
-      }
-      return res.json({
-        success: true,
-        code: existingCode,
-        discount: existing.value,
-        maxDiscount: existing.maxDiscount,
-        message: 'Nama ini sudah punya kode diskon. Gunakan kode di bawah ini.'
-      });
+      return res.redirect('/admin/settings?coupon_error=' + encodeURIComponent(`Nama "${displayName}" sudah punya kode aktif: ${existingCode} (${existing.value}%). Hapus dulu jika ingin membuat ulang.`));
     }
 
-    const config = await getCouponGeneratorConfig();
-    const minPct = Math.max(1, Math.min(50, parseInt(config.minPercent) || 5));
-    const maxPct = Math.max(minPct, Math.min(50, parseInt(config.maxPercent) || 15));
-    const percent = minPct + Math.floor(Math.random() * (maxPct - minPct + 1)); // nilai diskon acak dalam rentang aman
-    const maxDiscount = Math.max(0, parseInt(config.maxDiscount) || COUPON_GEN_DEFAULTS.maxDiscount);
-    const validDays = Math.max(1, parseInt(config.validDays) || COUPON_GEN_DEFAULTS.validDays);
+    const maxD = Math.max(0, Math.min(100000000, parseFloat(maxDiscount) || 0));
+    const days = Math.max(1, Math.min(365, parseInt(validDays) || 7));
 
     let code = randomCouponCode();
-    while (generatedCoupons[code]) code = randomCouponCode(); // hindari tabrakan kode
+    while (generatedCoupons[code]) code = randomCouponCode();
 
     generatedCoupons[code] = {
       type: 'percent',
-      value: percent,
+      value: pct,
       minOrder: 0,
-      maxDiscount,
-      description: `Kupon personal ${percent}% untuk ${displayName}`,
+      maxDiscount: maxD,
+      description: `Kupon personal ${pct}% untuk ${displayName}`,
       active: true,
       generated: true,
       boundName: normalizedName,
       boundNameDisplay: displayName,
       maxUses: 1,          // sekali pakai
       usedCount: 0,
-      validUntil: new Date(Date.now() + validDays * 24 * 60 * 60 * 1000).toISOString(),
+      validUntil: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
       createdAt: new Date().toISOString()
     };
     await saveGeneratedCoupons(generatedCoupons);
 
-    return res.json({
-      success: true,
-      code,
-      discount: percent,
-      maxDiscount,
-      message: `Kode diskon ${percent}% berhasil dibuat untuk "${displayName}"! Berlaku ${validDays} hari dan hanya bisa dipakai 1 kali.`
-    });
+    logger.info(`Kupon personal dibuat untuk "${displayName}": ${code} (${pct}%, maks ${maxD || 'tanpa batas'}, ${days} hari)`);
+    return res.redirect('/admin/settings?coupon_ok=' + encodeURIComponent(`Kode "${code}" (${pct}%) berhasil dibuat untuk "${displayName}". Berlaku ${days} hari dan sekali pakai.`));
   } catch (e) {
-    logger.error('Generate coupon failed', { error: e.message });
-    res.status(500).json({ success: false, message: 'Gagal membuat kode diskon. Coba lagi.' });
+    logger.error('Admin generate personal coupon failed', { error: e.message });
+    return res.redirect('/admin/settings?coupon_error=' + encodeURIComponent('Gagal membuat kupon personal. Coba lagi.'));
+  }
+});
+
+// Admin: hapus kupon personal
+app.post('/admin/coupons/generated/delete', (req, res, next) => {
+  if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).redirect('/login');
+  next();
+}, async (req, res) => {
+  try {
+    const { code } = req.body;
+    const upperCode = String(code || '').toUpperCase().trim();
+    const generatedCoupons = await getGeneratedCouponsFromDB();
+    if (upperCode && generatedCoupons[upperCode]) {
+      delete generatedCoupons[upperCode];
+      await saveGeneratedCoupons(generatedCoupons);
+      logger.info(`Kupon personal dihapus: ${upperCode}`);
+    }
+    return res.redirect('/admin/settings?coupon_ok=' + encodeURIComponent('Kupon personal berhasil dihapus.'));
+  } catch (e) {
+    logger.error('Admin delete personal coupon failed', { error: e.message });
+    return res.redirect('/admin/settings?coupon_error=' + encodeURIComponent('Gagal menghapus kupon personal.'));
   }
 });
 
@@ -1055,10 +1053,13 @@ app.get('/admin/analytics', requireAdmin, async (req, res) => {
 app.get('/admin/settings', requireAdmin, async (req, res) => {
   try {
     const settings = await settingsService.getAll();
-    res.render('admin/settings', { settings, formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user });
+    const rawCoupons = await settingsService.get('coupons').catch(() => null);
+    const generatedCoupons = await getGeneratedCouponsFromDB();
+    const coupons = rawCoupons ? (typeof rawCoupons === 'string' ? JSON.parse(rawCoupons) : rawCoupons) : {};
+    res.render('admin/settings', { settings, coupons, generatedCoupons, formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user });
   } catch (e) {
     logger.error('Admin settings error', { error: e.message });
-    res.render('admin/settings', { settings: {}, formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user });
+    res.render('admin/settings', { settings: {}, coupons: {}, generatedCoupons: {}, formatRupiah, cartCount: 0, currentPage: 'admin', user: req.session.user });
   }
 });
 
