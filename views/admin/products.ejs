@@ -201,11 +201,31 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label for="productImage" style="font-weight: 600; display: block; margin-bottom: 6px;">URL Gambar
-                        Produk</label>
-                    <input type="text" id="productImage" name="imageUrl" class="form-control"
-                        placeholder="https://... atau /images/pdh-d25.png">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">Foto Produk</label>
+                    <input type="hidden" id="productImage" name="imageUrl">
+                    <div style="display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;">
+                        <div id="productImagePreview"
+                            style="width: 120px; height: 120px; border: 1px dashed var(--border-color); border-radius: var(--radius); overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; flex-shrink: 0;">
+                            <span id="productImagePlaceholder"
+                                style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 8px;">Belum
+                                ada foto</span>
+                            <img id="productImageImg" src="" alt="Preview foto produk"
+                                style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div style="flex: 1; min-width: 220px;">
+                            <input type="file" id="productImageFile" name="imageFile" accept="image/*"
+                                class="form-control" style="padding: 8px;">
+                            <p style="margin: 8px 0 0; font-size: 12px; color: var(--text-secondary);">
+                                Format: JPG, PNG, WEBP, GIF, SVG, AVIF. Maksimal 5 MB. Foto tersimpan di Supabase
+                                Storage.
+                            </p>
+                            <button type="button" id="removeProductImage" class="btn btn-outline"
+                                style="margin-top: 8px; padding: 6px 12px; font-size: 12px; display: none;">
+                                Hapus Foto
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="productDescription"
@@ -246,10 +266,67 @@
         const modalTitle = document.getElementById('modalTitle');
         const saveBtn = document.getElementById('saveProductBtn');
 
+        // ===== Upload foto produk =====
+        const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB (harus sama dengan server)
+        const imageHidden = document.getElementById('productImage');
+        const imageFile = document.getElementById('productImageFile');
+        const imagePreviewImg = document.getElementById('productImageImg');
+        const imagePlaceholder = document.getElementById('productImagePlaceholder');
+        const removeImageBtn = document.getElementById('removeProductImage');
+        let imageRemoved = false; // true jika admin menghapus foto saat edit
+
+        function showImagePreview(src) {
+            if (src) {
+                imagePreviewImg.src = src;
+                imagePreviewImg.style.display = 'block';
+                imagePlaceholder.style.display = 'none';
+                removeImageBtn.style.display = 'inline-block';
+            } else {
+                imagePreviewImg.src = '';
+                imagePreviewImg.style.display = 'none';
+                imagePlaceholder.style.display = 'block';
+                removeImageBtn.style.display = 'none';
+            }
+        }
+
+        function resetImageUpload() {
+            imageFile.value = '';
+            imageHidden.value = '';
+            imageRemoved = false;
+            showImagePreview('');
+        }
+
+        imageFile.addEventListener('change', () => {
+            const file = imageFile.files && imageFile.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showToast('File harus berupa gambar (JPG, PNG, WEBP, GIF, SVG, AVIF)', 'error');
+                imageFile.value = '';
+                return;
+            }
+            if (file.size > MAX_IMAGE_SIZE) {
+                showToast('Ukuran foto maksimal 5 MB', 'error');
+                imageFile.value = '';
+                return;
+            }
+            imageRemoved = false;
+            const reader = new FileReader();
+            reader.onload = (ev) => showImagePreview(ev.target.result);
+            reader.readAsDataURL(file);
+        });
+
+        removeImageBtn.addEventListener('click', () => {
+            imageFile.value = '';
+            imageHidden.value = '';
+            imageRemoved = true;
+            showImagePreview('');
+        });
+
         // Open modal for add
         document.getElementById('addProductBtn').addEventListener('click', () => {
             form.reset();
             document.getElementById('productId').value = '';
+            resetImageUpload();
             modalTitle.textContent = 'Tambah Produk';
             saveBtn.textContent = 'Simpan Produk';
             modal.style.display = 'flex';
@@ -273,7 +350,10 @@
                         document.getElementById('productPrice').value = product.price || 0;
                         document.getElementById('productOriginalPrice').value = product.originalPrice || product.original_price || '';
                         document.getElementById('productPopular').checked = Boolean(product.popular);
-                        document.getElementById('productImage').value = product.image || product.imageUrl || product.image_url || '';
+                        imageHidden.value = product.image || product.imageUrl || product.image_url || '';
+                        imageFile.value = '';
+                        imageRemoved = false;
+                        showImagePreview(imageHidden.value);
                         document.getElementById('productDescription').value = product.description || '';
                         modal.style.display = 'flex';
                     }
@@ -300,15 +380,36 @@
 
             const id = document.getElementById('productId').value;
             const formData = new FormData(form);
+            formData.delete('imageFile'); // file ditangani terpisah via /admin/upload
             const data = Object.fromEntries(formData.entries());
 
             data.popular = document.getElementById('productPopular').checked;
             data.price = parseInt(data.price) || 0;
             data.originalPrice = data.originalPrice ? parseInt(data.originalPrice) : null;
 
+            const selectedFile = imageFile.files && imageFile.files[0];
             const url = id ? `/admin/products/${id}` : '/admin/products';
 
             try {
+                if (selectedFile) {
+                    saveBtn.textContent = 'Mengunggah foto...';
+                    const uploadForm = new FormData();
+                    uploadForm.append('file', selectedFile);
+                    const uploadRes = await fetch('/admin/upload', { method: 'POST', body: uploadForm });
+                    const uploadJson = await uploadRes.json().catch(() => ({}));
+                    if (!uploadRes.ok || !uploadJson.success || !uploadJson.url) {
+                        throw new Error(uploadJson.message || 'Gagal mengunggah foto');
+                    }
+                    imageHidden.value = uploadJson.url;
+                    data.imageUrl = uploadJson.url;
+                } else if (imageRemoved) {
+                    data.removeImage = true;
+                } else if (imageHidden.value) {
+                    data.imageUrl = imageHidden.value;
+                } else {
+                    delete data.imageUrl;
+                }
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },

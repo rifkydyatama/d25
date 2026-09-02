@@ -5,6 +5,7 @@ const session = require('express-session');
 const helmet = require('helmet');
 const { productService, cartService, orderService, settingsService, authService } = require('./lib/db');
 const createMidtransWebhookHandler = require('./lib/midtransWebhook');
+const { uploadProductPhoto, uploadProductImage } = require('./lib/upload');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1449,6 +1450,35 @@ app.get('/admin/api/products/:id', async (req, res) => {
     console.error(e);
     res.status(500).json({ error: e.message });
   }
+});
+
+// Admin upload foto produk ke Supabase Storage (bucket: product-images)
+app.post('/admin/upload', (req, res, next) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Unauthorized' });
+  }
+  next();
+}, uploadProductPhoto.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'File foto tidak ditemukan. Pilih file terlebih dahulu.' });
+    }
+    const url = await uploadProductImage(req.file);
+    return res.json({ success: true, url });
+  } catch (e) {
+    console.error('Upload foto produk error:', e);
+    return res.status(e.status || 500).json({ success: false, message: 'Gagal mengunggah foto: ' + e.message });
+  }
+});
+
+// Error handler khusus upload (error multer -> respons JSON)
+app.use((err, req, res, next) => {
+  if (req.path === '/admin/upload') {
+    let message = err.message || 'Gagal mengunggah foto';
+    if (err.code === 'LIMIT_FILE_SIZE') message = 'Ukuran foto maksimal 5 MB';
+    return res.status(err.status || 400).json({ success: false, message });
+  }
+  next(err);
 });
 
 // 404 handler
