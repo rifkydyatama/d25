@@ -395,9 +395,18 @@ async function getCouponsFromDB() {
 
 async function incrementCouponUsage(code) {
   try {
+    const upperCode = code.toUpperCase().trim();
+
+    // Kupon personal (generated) disimpan di settings terpisah
+    const generated = await getGeneratedCouponsFromDB();
+    if (generated[upperCode]) {
+      generated[upperCode].usedCount = (generated[upperCode].usedCount || 0) + 1;
+      await saveGeneratedCoupons(generated);
+      return;
+    }
+
     const { settingsService } = require('./lib/db');
     const coupons = await getCouponsFromDB();
-    const upperCode = code.toUpperCase().trim();
     if (coupons[upperCode]) {
       coupons[upperCode].usedCount = (coupons[upperCode].usedCount || 0) + 1;
       await settingsService.set('coupons', JSON.stringify(coupons), 'Daftar kupon diskon');
@@ -407,7 +416,71 @@ async function incrementCouponUsage(code) {
   }
 }
 
-function calculateDiscount(couponCode, subtotal, coupons, userId = null) {
+// =====================================================
+// KUPON PERSONAL (1 Nama = 1 Kode Diskon Acak, Sekali Pakai)
+// =====================================================
+function normalizeName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+// Kupon personal disimpan terpisah (settings 'generated_coupons') agar
+// tidak ikut tertimpa oleh form kupon reguler di halaman admin settings.
+async function getGeneratedCouponsFromDB() {
+  try {
+    const { settingsService } = require('./lib/db');
+    const raw = await settingsService.get('generated_coupons');
+    if (raw) {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch (e) {
+    // fallback: kosong
+  }
+  return {};
+}
+
+async function saveGeneratedCoupons(generatedCoupons) {
+  const { settingsService } = require('./lib/db');
+  await settingsService.set('generated_coupons', JSON.stringify(generatedCoupons), 'Kupon diskon personal (1 nama = 1 kode)');
+}
+
+async function getAllCouponsForValidation() {
+  const [regular, generated] = await Promise.all([
+    getCouponsFromDB(),
+    getGeneratedCouponsFromDB()
+  ]);
+  return { ...regular, ...generated };
+}
+
+const COUPON_GEN_DEFAULTS = { minPercent: 5, maxPercent: 15, maxDiscount: 20000, validDays: 7 };
+
+async function getCouponGeneratorConfig() {
+  try {
+    const { settingsService } = require('./lib/db');
+    const raw = await settingsService.get('coupon_generator');
+    if (raw) {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return { ...COUPON_GEN_DEFAULTS, ...parsed };
+    }
+  } catch (e) { /* fallback ke default */ }
+  return { ...COUPON_GEN_DEFAULTS };
+}
+
+// Kode acak yang tidak bisa ditebak; tanpa karakter ambigu (I, O, 0, 1)
+function randomCouponCode() {
+  const crypto = require('crypto');
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.randomBytes(8);
+  let code = '';
+  for (let i = 0; i < 8; i++) code += chars[bytes[i] % chars.length];
+  return 'DSC-' + code;
+}
+
+function calculateDiscount(couponCode, subtotal, coupons, userId = null, customerName = null) {
   const code = (couponCode || '').toUpperCase().trim();
   const coupon = (coupons || {})[code];
   if (!coupon || !coupon.active) return { valid: false, message: 'Kode kupon tidak valid atau sudah tidak berlaku.' };
@@ -423,6 +496,13 @@ function calculateDiscount(couponCode, subtotal, coupons, userId = null) {
   // Check max total uses
   if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
     return { valid: false, message: 'Kupon sudah mencapai batas penggunaan maksimal.' };
+  }
+
+  // Kupon personal (generated): hanya berlaku untuk nama pemiliknya
+  if (coupon.generated && coupon.boundName) {
+    if (!customerName || normalizeName(customerName) !== coupon.boundName) {
+      return { valid: false, message: 'Kode diskon ini personal dan hanya berlaku untuk nama pemiliknya.' };
+    }
   }
 
   // Check max uses per user
@@ -447,12 +527,86 @@ function calculateDiscount(couponCode, subtotal, coupons, userId = null) {
 // Coupon validation API
 app.post('/api/validate-coupon', async (req, res) => {
   try {
-    const { code, subtotal } = req.body;
-    const coupons = await getCouponsFromDB();
-    const result = calculateDiscount(code, Number(subtotal) || 0, coupons);
+    const { code, subtotal, name } = req.body;
+    const coupons = await getAllCouponsForValidation();
+    const result = calculateDiscount(code, Number(subtotal) || 0, coupons, req.session.user?.id || null, name);
     res.json(result);
   } catch (e) {
     res.status(500).json({ valid: false, message: 'Gagal memvalidasi kupon.' });
+  }
+});
+
+// Generate kupon personal: 1 nama = 1 kode acak, sekali pakai
+app.post('/api/generate-coupon', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const displayName = String(name || '').trim();
+    const normalizedName = normalizeName(name);
+
+    if (!normalizedName || normalizedName.length < 3) {
+      return res.json({ success: false, message: 'Masukkan nama lengkap yang valid (min. 3 karakter).' });
+    }
+
+    const generatedCoupons = await getGeneratedCouponsFromDB();
+
+    // ATURAN 1 NAMA = 1 DISKON:
+    // - Nama sudah punya kode & belum terpakai -> kembalikan kode yang sama (tidak bisa double-generate)
+    // - Nama sudah pernah memakai diskon -> tolak selamanya
+    const existingEntry = Object.entries(generatedCoupons).find(([, c]) => c.boundName === normalizedName);
+    if (existingEntry) {
+      const [existingCode, existing] = existingEntry;
+      if ((existing.usedCount || 0) >= (existing.maxUses || 1)) {
+        return res.json({ success: false, message: `Nama "${displayName}" sudah pernah menggunakan diskon. Setiap nama hanya berhak 1 kali diskon.` });
+      }
+      if (existing.validUntil && new Date(existing.validUntil) < new Date()) {
+        return res.json({ success: false, message: 'Kode diskon milik nama ini sudah kadaluarsa.' });
+      }
+      return res.json({
+        success: true,
+        code: existingCode,
+        discount: existing.value,
+        maxDiscount: existing.maxDiscount,
+        message: 'Nama ini sudah punya kode diskon. Gunakan kode di bawah ini.'
+      });
+    }
+
+    const config = await getCouponGeneratorConfig();
+    const minPct = Math.max(1, Math.min(50, parseInt(config.minPercent) || 5));
+    const maxPct = Math.max(minPct, Math.min(50, parseInt(config.maxPercent) || 15));
+    const percent = minPct + Math.floor(Math.random() * (maxPct - minPct + 1)); // nilai diskon acak dalam rentang aman
+    const maxDiscount = Math.max(0, parseInt(config.maxDiscount) || COUPON_GEN_DEFAULTS.maxDiscount);
+    const validDays = Math.max(1, parseInt(config.validDays) || COUPON_GEN_DEFAULTS.validDays);
+
+    let code = randomCouponCode();
+    while (generatedCoupons[code]) code = randomCouponCode(); // hindari tabrakan kode
+
+    generatedCoupons[code] = {
+      type: 'percent',
+      value: percent,
+      minOrder: 0,
+      maxDiscount,
+      description: `Kupon personal ${percent}% untuk ${displayName}`,
+      active: true,
+      generated: true,
+      boundName: normalizedName,
+      boundNameDisplay: displayName,
+      maxUses: 1,          // sekali pakai
+      usedCount: 0,
+      validUntil: new Date(Date.now() + validDays * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    await saveGeneratedCoupons(generatedCoupons);
+
+    return res.json({
+      success: true,
+      code,
+      discount: percent,
+      maxDiscount,
+      message: `Kode diskon ${percent}% berhasil dibuat untuk "${displayName}"! Berlaku ${validDays} hari dan hanya bisa dipakai 1 kali.`
+    });
+  } catch (e) {
+    console.error('Generate coupon failed:', e);
+    res.status(500).json({ success: false, message: 'Gagal membuat kode diskon. Coba lagi.' });
   }
 });
 
@@ -559,11 +713,18 @@ app.post('/checkout', async (req, res) => {
     let discountAmount = 0;
     let appliedCoupon = null;
     if (coupon_code) {
-      const coupons = await getCouponsFromDB();
-      const couponResult = calculateDiscount(coupon_code, subtotal, coupons, req.session.user?.id || null);
+      const coupons = await getAllCouponsForValidation();
+      const couponResult = calculateDiscount(coupon_code, subtotal, coupons, req.session.user?.id || null, name);
       if (couponResult.valid) {
         discountAmount = couponResult.discount;
         appliedCoupon = couponResult.code;
+      } else {
+        // Jangan biarkan order lanjut tanpa diskon saat kupon gagal validasi
+        const couponError = couponResult.message || 'Kode kupon tidak valid.';
+        if (req.accepts('json') || req.xhr) {
+          return res.status(400).json({ success: false, message: `Kupon gagal diterapkan: ${couponError}` });
+        }
+        return res.redirect('/checkout?coupon_error=' + encodeURIComponent(couponError));
       }
     }
 

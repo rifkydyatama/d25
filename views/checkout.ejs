@@ -712,6 +712,20 @@
                 background: #fee2e2;
             }
 
+            /* Generator kupon personal (1 nama = 1 kode diskon) */
+            .coupon-gen {
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px dashed #e2e8f0;
+            }
+
+            .coupon-gen-hint {
+                font-size: 11px;
+                color: #64748b;
+                margin: 0 0 8px;
+                line-height: 1.5;
+            }
+
             /* Responsive */
             @media (max-width: 768px) {
                 .checkout-container {
@@ -853,6 +867,16 @@
                                     <span class="coupon-applied-desc" id="coupon-applied-desc"></span>
                                 </div>
                                 <button type="button" class="coupon-remove">✕ Hapus</button>
+                            </div>
+
+                            <!-- Generator kupon personal: 1 nama = 1 kode diskon acak, sekali pakai -->
+                            <div class="coupon-gen" id="coupon-gen">
+                                <p class="coupon-gen-hint">Belum punya kode? Isi nama kamu untuk mendapat <strong>1 kode diskon acak</strong> — hanya berlaku untuk nama tersebut dan bisa dipakai <strong>1 kali</strong>.</p>
+                                <div class="coupon-input-row">
+                                    <input type="text" id="coupon-gen-name" placeholder="Nama kamu (mis. Budi Santoso)" maxlength="50">
+                                    <button type="button" id="btn-generate-coupon">Generate</button>
+                                </div>
+                                <div class="coupon-msg" id="coupon-gen-msg" style="display: none;"></div>
                             </div>
                         </div>
 
@@ -1234,10 +1258,15 @@
                     msgEl.style.display = 'none';
 
                     try {
+                        // Kirim nama pembeli untuk validasi kupon personal (1 nama = 1 kode)
+                        const nameEl = document.getElementById('name');
+                        const genNameEl = document.getElementById('coupon-gen-name');
+                        const couponName = (nameEl && nameEl.value.trim()) || (genNameEl && genNameEl.value.trim()) || '';
+
                         const response = await fetch('/api/validate-coupon', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ code, subtotal })
+                            body: JSON.stringify({ code, subtotal, name: couponName })
                         });
                         const result = await response.json();
 
@@ -1249,6 +1278,10 @@
                             document.getElementById('coupon-applied-code').textContent = result.code;
                             document.getElementById('coupon-applied-desc').textContent = result.description;
                             document.getElementById('coupon-applied').style.display = 'flex';
+
+                            // Sembunyikan panel generate saat kupon aktif
+                            const genPanel = document.getElementById('coupon-gen');
+                            if (genPanel) genPanel.style.display = 'none';
 
                             document.getElementById('discount-row').style.display = 'flex';
                             document.getElementById('discount-amount').textContent = '-' + formatIDR(result.discount);
@@ -1276,6 +1309,10 @@
                     document.getElementById('discount-row').style.display = 'none';
                     document.getElementById('coupon-msg').style.display = 'none';
 
+                    // Tampilkan kembali panel generate kupon personal
+                    const genPanel = document.getElementById('coupon-gen');
+                    if (genPanel) genPanel.style.display = 'block';
+
                     updateFee();
                 }
 
@@ -1295,6 +1332,64 @@
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         applyCoupon();
+                    }
+                });
+
+                // ===== Generator kupon personal (1 nama = 1 kode diskon acak, sekali pakai) =====
+                function showGenMsg(message, type) {
+                    const msgEl = document.getElementById('coupon-gen-msg');
+                    msgEl.textContent = message;
+                    msgEl.className = 'coupon-msg ' + type;
+                    msgEl.style.display = 'block';
+                }
+
+                async function generateCoupon() {
+                    const nameInput = document.getElementById('coupon-gen-name');
+                    const btn = document.getElementById('btn-generate-coupon');
+                    const name = nameInput.value.trim();
+
+                    if (!name) {
+                        showGenMsg('Masukkan nama kamu terlebih dahulu.', 'error');
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.textContent = 'Membuat...';
+
+                    try {
+                        const response = await fetch('/api/generate-coupon', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name })
+                        });
+                        const result = await response.json();
+
+                        if (result.success) {
+                            showGenMsg(result.message, 'success');
+
+                            // Samakan nama pembeli agar kupon personal valid saat checkout
+                            const nameEl = document.getElementById('name');
+                            if (nameEl && !nameEl.value.trim()) nameEl.value = name;
+
+                            // Otomatis isi & terapkan kode yang dihasilkan
+                            document.getElementById('coupon-input').value = result.code;
+                            await applyCoupon();
+                        } else {
+                            showGenMsg(result.message, 'error');
+                        }
+                    } catch (e) {
+                        showGenMsg('Gagal membuat kode diskon. Coba lagi.', 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = 'Generate';
+                    }
+                }
+
+                document.getElementById('btn-generate-coupon').addEventListener('click', generateCoupon);
+                document.getElementById('coupon-gen-name').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        generateCoupon();
                     }
                 });
 
